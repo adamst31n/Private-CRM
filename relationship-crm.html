@@ -86,6 +86,53 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Dashboard grid for desktop */
+    .dashboard-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .dashboard-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .dashboard-row > * {
+      flex: 1;
+    }
+
+    /* New dashboard layout with Activity spanning */
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .dashboard-left {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .dashboard-left-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .dashboard-activity {
+      flex: none;
+    }
+
+    /* New dashboard grid - mobile (single column) */
+    .dashboard-new-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
     /* ===== COMPONENTS ===== */
 
     /* Buttons */
@@ -290,7 +337,7 @@
     }
 
     .view-title {
-      font-size: 1.875rem;
+      font-size: 2.25rem;
       font-weight: 700;
       color: var(--color-text-primary);
       letter-spacing: -0.025em;
@@ -300,6 +347,61 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       padding: 0.25rem 0;
+    }
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Contact grid for desktop */
+    .contact-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .contact-card-compact {
+      padding: 0.75rem !important;
+    }
+
+    .contact-card-compact .contact-name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .contact-card-compact .contact-meta {
+      font-size: 0.75rem;
+    }
+
+    /* Activity item hover tooltip */
+    .activity-item {
+      position: relative;
+    }
+
+    .activity-item .activity-tooltip {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius);
+      padding: 0.75rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      font-size: 0.875rem;
+    }
+
+    .activity-item:hover .activity-tooltip {
+      display: block;
     }
 
     .back-button {
@@ -604,11 +706,98 @@
     @media (min-width: 768px) {
       #app {
         padding-bottom: 0;
+        max-width: 90%;
+        width: 100%;
+        max-width: min(90%, 1400px);
       }
+
+      .view {
+        padding: var(--spacing-lg);
+      }
+
       #bottom-nav {
         max-width: 768px;
         left: 50%;
         transform: translateX(-50%);
+      }
+
+      /* Dashboard responsive grid */
+      .dashboard-grid {
+        gap: var(--spacing-lg);
+      }
+
+      .dashboard-row {
+        flex-direction: row;
+        gap: var(--spacing-lg);
+      }
+
+      .dashboard-row-3 > *:first-child {
+        flex: 1;
+      }
+
+      .dashboard-row-3 > *:nth-child(2) {
+        flex: 1;
+      }
+
+      .dashboard-row-3 > *:last-child {
+        flex: 1.5;
+      }
+
+      /* New dashboard grid with Activity spanning */
+      .dashboard-new-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: auto auto;
+        gap: var(--spacing-lg);
+      }
+
+      .dashboard-new-grid .card-priority {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .dashboard-new-grid .card-attention {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .dashboard-new-grid .card-activity {
+        grid-column: 3;
+        grid-row: 1 / 3;
+      }
+
+      .dashboard-new-grid .card-birthdays {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .dashboard-new-grid .card-stats {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      /* Cards can be wider on desktop */
+      .card {
+        padding: var(--spacing-xl);
+      }
+
+      /* Contact grid - multiple columns on desktop */
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .contact-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .view {
+        padding: var(--spacing-xl);
       }
     }
   </style>
@@ -1188,37 +1377,175 @@
             <h1 class="view-title">Dashboard</h1>
           </div>
 
-          <!-- Stats and Upcoming Birthdays Row -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: var(--spacing-lg);">
-            <!-- Quick Stats Card -->
-            <div class="card" style="margin-bottom: 0;">
-              <h2 class="mb-md" style="font-size: 1.1rem;">Quick Stats</h2>
-              <!-- Contacts -->
-              <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border-light);">
-                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${totalContacts}</div>
-                <div class="text-muted text-small">Total Contacts</div>
-              </div>
-              <!-- Interactions breakdown -->
-              <div class="text-muted text-small" style="margin-bottom: 0.5rem; font-weight: 600;">Interactions</div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
-                <div>
-                  <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${totalInteractions}</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Total</div>
+          <div class="dashboard-new-grid">
+            <!-- Priority Contacts -->
+            <div class="card card-priority" style="margin-bottom: 0; ${priorityContacts.length > 0 ? 'border-left: 3px solid var(--color-danger); background: linear-gradient(to right, rgba(239, 68, 68, 0.05), transparent);' : 'opacity: 0.6;'}">
+              <h2 class="section-title">
+                <span style="background: ${priorityContacts.length > 0 ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : '#F3F4F6'}; color: ${priorityContacts.length > 0 ? 'white' : '#6B7280'}; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">PRIORITY</span>
+                <span>Contact ASAP${priorityContacts.length > 0 ? ` (${priorityContacts.length})` : ''}</span>
+              </h2>
+              ${priorityContacts.length > 0 ? `
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  ${priorityContacts.map(contact => {
+                    const days = getDaysSinceLastContact(contact.id);
+                    const status = getContactStatus(contact.id);
+                    const statusText = days === null ? 'Never contacted' : `${days} days ago`;
+                    return `
+                      <div class="card card-clickable" style="padding: 0.75rem; margin: 0; border-left: 3px solid var(--color-${status});" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                          <div>
+                            <div style="font-weight: 600;">${escapeHtml(getFullName(contact))}</div>
+                            <div class="text-muted text-small">${contact.relationshipType}</div>
+                          </div>
+                          <div class="text-small" style="color: var(--color-${status}); font-weight: 600;">
+                            ${statusText}
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
                 </div>
-                <div>
-                  <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${ytdInteractions}</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">YTD</div>
+              ` : '<p class="text-muted text-small">No priority contacts</p>'}
+            </div>
+
+            <!-- Needs Attention -->
+            <div class="card card-attention" style="margin-bottom: 0; ${(needsAttentionProfessional.length > 0 || needsAttentionPersonal.length > 0) ? 'border-left: 3px solid var(--color-warning);' : 'opacity: 0.6;'}">
+              <h2 class="section-title">Needs Attention</h2>
+              ${(needsAttentionProfessional.length > 0 || needsAttentionPersonal.length > 0) ? `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <!-- Professional Column -->
+                  <div style="${needsAttentionProfessional.length === 0 ? 'opacity: 0.5;' : ''}">
+                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--color-primary);">
+                      Professional ${needsAttentionProfessional.length > 0 ? `(${needsAttentionProfessional.length})` : ''}
+                    </h3>
+                    ${needsAttentionProfessional.length > 0 ? `
+                      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        ${needsAttentionProfessional.slice(0, 4).map(contact => {
+                          const days = getDaysSinceLastContact(contact.id);
+                          const status = getContactStatus(contact.id);
+                          const statusText = days === null ? 'Never' : `${days}d`;
+                          return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer;" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                              <div style="min-width: 0; flex: 1;">
+                                <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</div>
+                              </div>
+                              <div style="font-size: 0.75rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap;">
+                                ${statusText}
+                              </div>
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+                      ${needsAttentionProfessional.length > 4 ? `
+                        <button class="btn btn-secondary btn-block" style="margin-top: 0.75rem; padding: 0.5rem; font-size: 0.8rem;" onclick="navigateTo('contacts')">
+                          View All ${needsAttentionProfessional.length}
+                        </button>
+                      ` : ''}
+                    ` : '<p class="text-muted text-small">All caught up!</p>'}
+                  </div>
+                  <!-- Personal Column -->
+                  <div style="${needsAttentionPersonal.length === 0 ? 'opacity: 0.5;' : ''}">
+                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--color-primary);">
+                      Personal ${needsAttentionPersonal.length > 0 ? `(${needsAttentionPersonal.length})` : ''}
+                    </h3>
+                    ${needsAttentionPersonal.length > 0 ? `
+                      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        ${needsAttentionPersonal.slice(0, 4).map(contact => {
+                          const days = getDaysSinceLastContact(contact.id);
+                          const status = getContactStatus(contact.id);
+                          const statusText = days === null ? 'Never' : `${days}d`;
+                          return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer;" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                              <div style="min-width: 0; flex: 1;">
+                                <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</div>
+                              </div>
+                              <div style="font-size: 0.75rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap;">
+                                ${statusText}
+                              </div>
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+                      ${needsAttentionPersonal.length > 4 ? `
+                        <button class="btn btn-secondary btn-block" style="margin-top: 0.75rem; padding: 0.5rem; font-size: 0.8rem;" onclick="navigateTo('contacts')">
+                          View All ${needsAttentionPersonal.length}
+                        </button>
+                      ` : ''}
+                    ` : '<p class="text-muted text-small">All caught up!</p>'}
+                  </div>
                 </div>
-                <div>
-                  <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${l7dInteractions}</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">L7D</div>
+              ` : '<p class="text-muted text-small">All caught up!</p>'}
+            </div>
+
+            <!-- Activity Column (spans vertically) -->
+            <div class="card card-activity" style="margin-bottom: 0;">
+              <h2 class="section-title">Activity</h2>
+
+              <!-- Upcoming Activity -->
+              ${upcomingInteractions.length > 0 ? `
+                <div style="margin-bottom: 1rem;">
+                  <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.75rem;">Upcoming</h3>
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${upcomingInteractions.slice(0, 5).map(interaction => {
+                      const contact = getContact(interaction.contactId);
+                      const notePreview = interaction.notes ? (interaction.notes.length > 60 ? interaction.notes.substring(0, 60) + '...' : interaction.notes) : '';
+                      return `
+                        <div class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(37, 99, 235, 0.05); border-radius: 0.5rem; cursor: pointer; border-left: 2px dashed var(--color-primary);" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                          <div style="min-width: 0; flex: 1;">
+                            <div style="font-weight: 600; font-size: 0.875rem; color: var(--color-primary);">${interaction.type} with ${escapeHtml(getFullName(contact))}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">${formatDate(interaction.date)}</div>
+                          </div>
+                          ${notePreview ? `
+                            <div class="activity-tooltip">
+                              <div style="font-weight: 600; margin-bottom: 0.25rem;">${interaction.type} with ${escapeHtml(getFullName(contact))}</div>
+                              <div class="text-muted" style="margin-bottom: 0.5rem;">${formatDate(interaction.date)}</div>
+                              <div>${escapeHtml(interaction.notes)}</div>
+                            </div>
+                          ` : ''}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
                 </div>
-              </div>
+              ` : ''}
+
+              <!-- Recent Activity -->
+              ${recentInteractions.length > 0 ? `
+                <div>
+                  <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.75rem;">Recent</h3>
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${recentInteractions.slice(0, 8).map(interaction => {
+                      const contact = getContact(interaction.contactId);
+                      const status = getContactStatus(contact.id);
+                      const notePreview = interaction.notes ? (interaction.notes.length > 60 ? interaction.notes.substring(0, 60) + '...' : interaction.notes) : '';
+                      return `
+                        <div class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer;" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                          <div style="min-width: 0; flex: 1;">
+                            <div style="font-weight: 600; font-size: 0.875rem;">${interaction.type} with ${escapeHtml(getFullName(contact))}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">${formatRelativeDate(interaction.date)}</div>
+                          </div>
+                          ${notePreview ? `
+                            <div class="activity-tooltip">
+                              <div style="font-weight: 600; margin-bottom: 0.25rem;">${interaction.type} with ${escapeHtml(getFullName(contact))}</div>
+                              <div class="text-muted" style="margin-bottom: 0.5rem;">${formatRelativeDate(interaction.date)}</div>
+                              <div>${escapeHtml(interaction.notes)}</div>
+                            </div>
+                          ` : ''}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              ${upcomingInteractions.length === 0 && recentInteractions.length === 0 ? `
+                <p class="text-muted text-small">No activity yet</p>
+              ` : ''}
             </div>
 
             <!-- Upcoming Birthdays Card -->
-            <div class="card" style="margin-bottom: 0;">
-              <h2 class="mb-md" style="font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <div class="card card-birthdays" style="margin-bottom: 0;">
+              <h2 class="section-title">
                 <span style="font-size: 1.25rem;">🎂</span>
                 <span>Upcoming Birthdays</span>
               </h2>
@@ -1249,199 +1576,33 @@
                 `;
               })()}
             </div>
+
+            <!-- Quick Stats Card -->
+            <div class="card card-stats" style="margin-bottom: 0;">
+              <h2 class="section-title">Quick Stats</h2>
+              <!-- Contacts -->
+              <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border-light);">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${totalContacts}</div>
+                <div class="text-muted text-small">Total Contacts</div>
+              </div>
+              <!-- Interactions breakdown -->
+              <div class="text-muted text-small" style="margin-bottom: 0.5rem; font-weight: 600;">Interactions</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                <div>
+                  <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${totalInteractions}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Total</div>
+                </div>
+                <div>
+                  <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${ytdInteractions}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">YTD</div>
+                </div>
+                <div>
+                  <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${l7dInteractions}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">L7D</div>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <!-- Priority Contacts -->
-          ${priorityContacts.length > 0 ? `
-            <div class="card mb-lg" style="border-left: 3px solid var(--color-danger); background: linear-gradient(to right, rgba(239, 68, 68, 0.05), transparent);">
-              <h2 class="mb-md" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">PRIORITY</span>
-                <span>Contact ASAP (${priorityContacts.length})</span>
-              </h2>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                ${priorityContacts.map(contact => {
-                  const days = getDaysSinceLastContact(contact.id);
-                  const status = getContactStatus(contact.id);
-                  const statusText = days === null ? 'Never contacted' : `${days} days ago`;
-                  return `
-                    <div class="card card-clickable" style="padding: 0.75rem; margin: 0; border-left: 3px solid var(--color-${status});" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                      <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                          <div style="font-weight: 600;">${escapeHtml(getFullName(contact))}</div>
-                          <div class="text-muted text-small">${contact.relationshipType}</div>
-                        </div>
-                        <div class="text-small" style="color: var(--color-${status}); font-weight: 600;">
-                          ${statusText}
-                        </div>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          ` : ''}
-
-          <!-- Needs Attention -->
-          ${(needsAttentionProfessional.length > 0 || needsAttentionPersonal.length > 0) ? `
-            <div class="card mb-lg" style="border-left: 3px solid var(--color-warning);">
-              <h2 class="mb-md" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="background: #FEF3C7; color: #92400E; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">ATTENTION</span>
-                <span>Needs Attention</span>
-              </h2>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <!-- Professional Column -->
-                <div style="${needsAttentionProfessional.length === 0 ? 'opacity: 0.5;' : ''}">
-                  <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--color-primary);">
-                    Professional ${needsAttentionProfessional.length > 0 ? `(${needsAttentionProfessional.length})` : ''}
-                  </h3>
-                  ${needsAttentionProfessional.length > 0 ? `
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                      ${needsAttentionProfessional.slice(0, 4).map(contact => {
-                        const days = getDaysSinceLastContact(contact.id);
-                        const status = getContactStatus(contact.id);
-                        const statusText = days === null ? 'Never' : `${days}d`;
-                        return `
-                          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer;" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                            <div style="min-width: 0; flex: 1;">
-                              <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</div>
-                            </div>
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap;">
-                              ${statusText}
-                            </div>
-                          </div>
-                        `;
-                      }).join('')}
-                    </div>
-                    ${needsAttentionProfessional.length > 4 ? `
-                      <button class="btn btn-secondary btn-block" style="margin-top: 0.75rem; padding: 0.5rem; font-size: 0.8rem;" onclick="navigateTo('contacts')">
-                        View All ${needsAttentionProfessional.length}
-                      </button>
-                    ` : ''}
-                  ` : `
-                    <p class="text-muted text-small">All caught up!</p>
-                  `}
-                </div>
-                <!-- Personal Column -->
-                <div style="${needsAttentionPersonal.length === 0 ? 'opacity: 0.5;' : ''}">
-                  <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--color-primary);">
-                    Personal ${needsAttentionPersonal.length > 0 ? `(${needsAttentionPersonal.length})` : ''}
-                  </h3>
-                  ${needsAttentionPersonal.length > 0 ? `
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                      ${needsAttentionPersonal.slice(0, 4).map(contact => {
-                        const days = getDaysSinceLastContact(contact.id);
-                        const status = getContactStatus(contact.id);
-                        const statusText = days === null ? 'Never' : `${days}d`;
-                        return `
-                          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer;" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                            <div style="min-width: 0; flex: 1;">
-                              <div style="font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</div>
-                            </div>
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap;">
-                              ${statusText}
-                            </div>
-                          </div>
-                        `;
-                      }).join('')}
-                    </div>
-                    ${needsAttentionPersonal.length > 4 ? `
-                      <button class="btn btn-secondary btn-block" style="margin-top: 0.75rem; padding: 0.5rem; font-size: 0.8rem;" onclick="navigateTo('contacts')">
-                        View All ${needsAttentionPersonal.length}
-                      </button>
-                    ` : ''}
-                  ` : `
-                    <p class="text-muted text-small">All caught up!</p>
-                  `}
-                </div>
-              </div>
-            </div>
-          ` : ''}
-
-          <!-- Upcoming Birthdays -->
-          ${upcomingBirthdays.length > 0 ? `
-            <div class="card mb-lg">
-              <h2 class="mb-md" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="background: #FCE7F3; color: #9F1239; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">BIRTHDAYS</span>
-                <span>Upcoming Birthdays (${upcomingBirthdays.length})</span>
-              </h2>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                ${upcomingBirthdays.map(({ contact, daysUntil }) => {
-                  const dayText = daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`;
-                  const birthdayText = contact.birthdayMonth && contact.birthdayDay ? `${contact.birthdayMonth} ${contact.birthdayDay}` : formatDate(contact.birthday);
-                  return `
-                    <div class="card card-clickable" style="padding: 0.75rem; margin: 0;" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                      <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                          <div style="font-weight: 600;">${escapeHtml(getFullName(contact))}</div>
-                          <div class="text-muted text-small">${birthdayText}</div>
-                        </div>
-                        <div class="text-small" style="color: var(--color-primary); font-weight: 600;">
-                          ${dayText}
-                        </div>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          ` : ''}
-
-          <!-- Upcoming Activity -->
-          ${upcomingInteractions.length > 0 ? `
-            <div class="card mb-lg" style="border-left: 3px solid var(--color-primary); background: linear-gradient(to right, rgba(37, 99, 235, 0.03), transparent);">
-              <h2 class="mb-md" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="background: #DBEAFE; color: #1E40AF; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">UPCOMING</span>
-                <span>Upcoming Activity</span>
-              </h2>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                ${upcomingInteractions.map(interaction => {
-                  const contact = getContact(interaction.contactId);
-                  const initials = getContactInitials(contact);
-                  return `
-                    <div class="card card-clickable" style="padding: 0.75rem; margin: 0; border-left: 2px dashed var(--color-primary);" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                      <div style="display: flex; gap: 0.75rem; align-items: start;">
-                        <span class="icon" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: white; font-size: 0.875rem; font-weight: 700;">${initials}</span>
-                        <div style="flex: 1;">
-                          <div style="font-weight: 600; color: var(--color-primary);">${interaction.type} with ${escapeHtml(getFullName(contact))}</div>
-                          <div class="text-small" style="color: var(--color-primary); font-weight: 500;">${formatDate(interaction.date)} (${formatRelativeDate(interaction.date)})</div>
-                          ${interaction.notes ? `<div class="text-small mt-sm">${escapeHtml(interaction.notes)}</div>` : ''}
-                        </div>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          ` : ''}
-
-          <!-- Recent Activity -->
-          ${recentInteractions.length > 0 ? `
-            <div class="card mb-lg">
-              <h2 class="mb-md" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="background: #E0E7FF; color: #3730A3; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">ACTIVITY</span>
-                <span>Recent Activity</span>
-              </h2>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                ${recentInteractions.map(interaction => {
-                  const contact = getContact(interaction.contactId);
-                  const initials = getContactInitials(contact);
-                  const status = getContactStatus(contact.id);
-                  return `
-                    <div class="card" style="padding: 0.75rem; margin: 0; cursor: pointer;" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                      <div style="display: flex; gap: 0.75rem; align-items: start;">
-                        <span class="icon" style="background: linear-gradient(135deg, var(--color-${status}) 0%, var(--color-${status}) 100%); color: white; font-size: 0.875rem; font-weight: 700;">${initials}</span>
-                        <div style="flex: 1;">
-                          <div style="font-weight: 600;">${interaction.type} with ${escapeHtml(getFullName(contact))}</div>
-                          <div class="text-muted text-small">${formatRelativeDate(interaction.date)}</div>
-                          ${interaction.notes ? `<div class="text-small mt-sm">${escapeHtml(interaction.notes)}</div>` : ''}
-                        </div>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          ` : ''}
         </div>
       `;
     }
@@ -1624,26 +1785,26 @@
               <p>No contacts match your search.</p>
             </div>
           ` : `
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="contact-grid">
               ${contacts.map(contact => {
                 const days = getDaysSinceLastContact(contact.id);
                 const status = getContactStatus(contact.id);
-                const statusText = days === null ? 'Never contacted' : days === 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
+                const statusText = days === null ? 'Never' : days === 0 ? 'Today' : days === 1 ? '1d' : `${days}d`;
                 const priorityStyle = contact.priority ? 'background: linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent);' : '';
 
                 return `
-                  <div class="card card-clickable" style="border-left: 3px solid var(--color-${status}); padding: 1rem; margin: 0; ${priorityStyle}" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <div style="flex: 1;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                  <div class="card card-clickable contact-card-compact" style="border-left: 3px solid var(--color-${status}); margin: 0; ${priorityStyle}" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                      <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.375rem; margin-bottom: 0.125rem;">
                           <span class="status-dot status-${status}"></span>
-                          <span style="font-weight: 600; font-size: 1.1rem;">${escapeHtml(getFullName(contact))}</span>
-                          ${contact.priority ? `<span style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 700;">CONTACT ASAP</span>` : ''}
+                          <span class="contact-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</span>
+                          ${contact.priority ? `<span style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; padding: 0.0625rem 0.375rem; border-radius: 0.25rem; font-size: 0.625rem; font-weight: 700; white-space: nowrap;">ASAP</span>` : ''}
                         </div>
-                        <div class="text-muted text-small">${contact.relationshipType}</div>
+                        <div class="contact-meta text-muted">${contact.relationshipType}</div>
                       </div>
-                      <div style="text-align: right;">
-                        <div class="text-small" style="color: var(--color-${status}); font-weight: 600;">
+                      <div style="text-align: right; white-space: nowrap;">
+                        <div class="contact-meta" style="color: var(--color-${status}); font-weight: 600;">
                           ${statusText}
                         </div>
                       </div>
@@ -1950,9 +2111,11 @@
       app.innerHTML = `
         <div class="view">
           <!-- Header -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <button class="back-button" onclick="navigateTo(${isEdit ? `'contact', {id: '${contact.id}'}` : "'contacts'"})">← Cancel</button>
-            <h1 class="view-title">${isEdit ? 'Edit Contact' : 'Add Contact'}</h1>
+          <div style="position: relative; margin-bottom: 1.5rem;">
+            <button class="back-button" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: rgba(239, 68, 68, 0.1); color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.2);" onclick="navigateTo(${isEdit ? `'contact', {id: '${contact.id}'}` : "'contacts'"})">← Cancel</button>
+            <div class="view-header" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+              <h1 class="view-title">${isEdit ? 'Edit Contact' : 'Add Contact'}</h1>
+            </div>
           </div>
 
           <!-- Form -->
