@@ -388,7 +388,6 @@
     .activity-item .activity-tooltip {
       display: none;
       position: absolute;
-      left: 0;
       right: 0;
       top: 100%;
       margin-top: 0.25rem;
@@ -399,10 +398,20 @@
       box-shadow: var(--shadow-lg);
       z-index: 100;
       font-size: 0.875rem;
+      width: 85%;
+      max-width: 280px;
     }
 
     .activity-item:hover .activity-tooltip {
       display: block;
+    }
+
+    /* Tooltip appears above when item is in lower portion of viewport */
+    .activity-item.tooltip-above .activity-tooltip {
+      top: auto;
+      bottom: 100%;
+      margin-top: 0;
+      margin-bottom: 0.25rem;
     }
 
     /* Activity scroll container */
@@ -2981,6 +2990,198 @@
       }
     }
 
+    function downloadCSVTemplate() {
+      const headers = ['First Name', 'Last Name', 'Relationship Type', 'Phone', 'Email', 'LinkedIn', 'Industry', 'Birthday Month', 'Birthday Day', 'How We Met'];
+      const exampleRow = ['John', 'Doe', 'Professional', '(555) 123-4567', 'john@example.com', 'https://linkedin.com/in/johndoe', 'Technology', 'January', '15', 'Work conference'];
+
+      const csvContent = [
+        headers.join(','),
+        exampleRow.map(cell => `"${cell}"`).join(',')
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'contact-import-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('Template downloaded');
+    }
+
+    function importCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          const lines = text.split(/\r?\n/).filter(line => line.trim());
+
+          if (lines.length < 2) {
+            showToast('CSV file is empty or has no data rows', 'error');
+            return;
+          }
+
+          // Parse headers (first row)
+          const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+
+          // Map headers to our field names
+          const headerMap = {
+            'first name': 'firstName',
+            'firstname': 'firstName',
+            'last name': 'lastName',
+            'lastname': 'lastName',
+            'name': 'name',
+            'relationship type': 'relationshipType',
+            'relationshiptype': 'relationshipType',
+            'type': 'relationshipType',
+            'phone': 'phone',
+            'email': 'email',
+            'linkedin': 'linkedin',
+            'linkedin url': 'linkedin',
+            'industry': 'industry',
+            'birthday month': 'birthdayMonth',
+            'birthdaymonth': 'birthdayMonth',
+            'birthday day': 'birthdayDay',
+            'birthdayday': 'birthdayDay',
+            'how we met': 'howWeMet',
+            'howwemet': 'howWeMet',
+            'met': 'howWeMet'
+          };
+
+          // Find column indices
+          const columnMap = {};
+          headers.forEach((header, index) => {
+            const fieldName = headerMap[header];
+            if (fieldName) {
+              columnMap[fieldName] = index;
+            }
+          });
+
+          // Check for required field (at least name or first name)
+          if (columnMap.firstName === undefined && columnMap.name === undefined) {
+            showToast('CSV must have "First Name" or "Name" column', 'error');
+            return;
+          }
+
+          // Parse data rows
+          const contacts = [];
+          for (let i = 1; i < lines.length; i++) {
+            const values = parseCSVLine(lines[i]);
+            if (values.length === 0 || values.every(v => !v.trim())) continue;
+
+            const contact = {
+              firstName: values[columnMap.firstName] || '',
+              lastName: values[columnMap.lastName] || '',
+              relationshipType: values[columnMap.relationshipType] || 'Acquaintance',
+              phone: values[columnMap.phone] || '',
+              email: values[columnMap.email] || '',
+              linkedin: values[columnMap.linkedin] || '',
+              industry: values[columnMap.industry] || '',
+              birthdayMonth: values[columnMap.birthdayMonth] || '',
+              birthdayDay: values[columnMap.birthdayDay] || '',
+              howWeMet: values[columnMap.howWeMet] || ''
+            };
+
+            // Handle "Name" column (split into first/last)
+            if (columnMap.name !== undefined && !contact.firstName) {
+              const fullName = values[columnMap.name] || '';
+              const nameParts = fullName.trim().split(/\s+/);
+              contact.firstName = nameParts[0] || '';
+              contact.lastName = nameParts.slice(1).join(' ') || '';
+            }
+
+            // Skip if no name
+            if (!contact.firstName.trim()) continue;
+
+            // Validate relationship type
+            const validTypes = ['Family', 'Close Friend', 'Friend', 'Professional', 'Acquaintance'];
+            if (!validTypes.includes(contact.relationshipType)) {
+              contact.relationshipType = 'Acquaintance';
+            }
+
+            // Format phone number if present
+            if (contact.phone) {
+              contact.phone = formatPhoneNumber(contact.phone);
+            }
+
+            contacts.push(contact);
+          }
+
+          if (contacts.length === 0) {
+            showToast('No valid contacts found in CSV', 'error');
+            return;
+          }
+
+          // Confirm import
+          if (!confirm(`Import ${contacts.length} contacts? They will be added to your existing contacts.`)) {
+            return;
+          }
+
+          // Add contacts
+          let added = 0;
+          contacts.forEach(contactData => {
+            addContact(contactData);
+            added++;
+          });
+
+          showToast(`Imported ${added} contacts`);
+          renderCurrentView();
+
+        } catch (error) {
+          console.error('CSV import error:', error);
+          showToast('Error importing CSV: ' + error.message, 'error');
+        }
+      };
+
+      reader.onerror = () => {
+        showToast('Error reading file', 'error');
+      };
+
+      reader.readAsText(file);
+      event.target.value = ''; // Reset file input
+    }
+
+    // Helper function to parse CSV line (handles quoted values)
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+
+        if (inQuotes) {
+          if (char === '"' && nextChar === '"') {
+            current += '"';
+            i++; // Skip next quote
+          } else if (char === '"') {
+            inQuotes = false;
+          } else {
+            current += char;
+          }
+        } else {
+          if (char === '"') {
+            inQuotes = true;
+          } else if (char === ',') {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+      }
+
+      result.push(current.trim());
+      return result;
+    }
+
     function importData(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -3096,20 +3297,38 @@
               <span style="background: #F3F4F6; color: #374151; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">DATA</span>
               <span>Data Management</span>
             </h2>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-              <button class="btn btn-secondary btn-block" onclick="exportData()">
-                Export JSON (Full Backup)
-              </button>
-              <button class="btn btn-secondary btn-block" onclick="exportCSV()">
-                Export CSV (Contacts Only)
-              </button>
-              <button class="btn btn-secondary btn-block" onclick="document.getElementById('import-file').click()">
-                Import Data (Restore)
-              </button>
-              <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+
+            <!-- Export Section -->
+            <div style="margin-bottom: 1rem;">
+              <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Export</h3>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button class="btn btn-secondary btn-block" onclick="exportData()">
+                  Export JSON (Full Backup)
+                </button>
+                <button class="btn btn-secondary btn-block" onclick="exportCSV()">
+                  Export CSV (Contacts Only)
+                </button>
+              </div>
             </div>
-            <p class="text-muted text-small" style="margin-top: 1rem;">
-              Export to JSON for full backup with interactions. Export to CSV for spreadsheet-compatible contact list. Import from JSON to restore a backup.
+
+            <!-- Import Section -->
+            <div style="margin-bottom: 1rem;">
+              <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.5rem;">Import</h3>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button class="btn btn-secondary btn-block" onclick="document.getElementById('import-file').click()">
+                  Import JSON (Restore Backup)
+                </button>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                <button class="btn btn-secondary btn-block" onclick="document.getElementById('import-csv-file').click()">
+                  Import CSV (Contacts)
+                </button>
+                <input type="file" id="import-csv-file" accept=".csv,.xlsx,.xls" style="display: none;" onchange="importCSV(event)">
+              </div>
+            </div>
+
+            <p class="text-muted text-small">
+              <strong>JSON:</strong> Full backup including contacts and interactions.<br>
+              <strong>CSV:</strong> Import contacts from spreadsheet. <a href="#" onclick="downloadCSVTemplate(); return false;" style="color: var(--color-primary);">Download the template</a> to see required headers.
             </p>
           </div>
 
@@ -3144,7 +3363,7 @@
               </div>
               <div style="display: flex; justify-content: space-between;">
                 <span class="text-muted">Version</span>
-                <span style="font-weight: 600;">1.0</span>
+                <span style="font-weight: 600;">1.20</span>
               </div>
             </div>
           </div>
@@ -3249,6 +3468,20 @@
           navigateTo('dashboard');
         }
       });
+
+      // Activity tooltip positioning - show above if item is in lower half of viewport
+      document.addEventListener('mouseenter', (e) => {
+        const activityItem = e.target.closest('.activity-item');
+        if (activityItem && activityItem.querySelector('.activity-tooltip')) {
+          const rect = activityItem.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          if (rect.top > viewportHeight * 0.5) {
+            activityItem.classList.add('tooltip-above');
+          } else {
+            activityItem.classList.remove('tooltip-above');
+          }
+        }
+      }, true);
 
       // Initial render
       handleHashChange();
