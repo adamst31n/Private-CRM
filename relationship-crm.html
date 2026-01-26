@@ -112,14 +112,14 @@
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       box-shadow: var(--shadow-md);
-      font-size: 1rem;
+      font-size: 1.25rem;
       transition: background-color 0.2s, transform 0.2s;
     }
 
@@ -3939,8 +3939,22 @@
         return;
       }
 
+      // Find the header row (look for the row with "First Name")
+      let headerRowIndex = -1;
+      for (let i = 0; i < Math.min(10, lines.length); i++) {
+        if (lines[i].toLowerCase().includes('first name')) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      if (headerRowIndex === -1) {
+        showToast('Could not find header row in CSV. Please make sure this is a LinkedIn Connections CSV.', 'error');
+        return;
+      }
+
       // Parse header row
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const headers = lines[headerRowIndex].split(',').map(h => h.trim().replace(/"/g, ''));
       
       // Find column indices (LinkedIn CSV format)
       const urlIdx = headers.findIndex(h => h.toLowerCase().includes('url'));
@@ -3951,9 +3965,9 @@
       const positionIdx = headers.findIndex(h => h.toLowerCase().includes('position'));
       const connectedOnIdx = headers.findIndex(h => h.toLowerCase().includes('connected on'));
 
-      // Parse data rows
+      // Parse data rows (start after header row)
       const linkedinRecords = [];
-      for (let i = 1; i < lines.length; i++) {
+      for (let i = headerRowIndex + 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
 
