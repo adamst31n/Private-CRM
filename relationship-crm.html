@@ -112,14 +112,14 @@
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       box-shadow: var(--shadow-md);
-      font-size: 1.25rem;
+      font-size: 1rem;
       transition: background-color 0.2s, transform 0.2s;
     }
 
@@ -1016,7 +1016,9 @@
       contacts: [],
       interactions: [],
       currentView: 'dashboard',
-      selectedContactId: null
+      selectedContactId: null,
+      linkedinData: [], // Reference database from LinkedIn CSV
+      enrichmentConflicts: [] // Tracks contacts with data conflicts
     };
 
     /* ===== UTILITY FUNCTIONS ===== */
@@ -1139,16 +1141,22 @@
     const STORAGE_KEYS = {
       contacts: 'crm_contacts',
       interactions: 'crm_interactions',
-      version: 'crm_version'
+      version: 'crm_version',
+      linkedinData: 'crm_linkedin_data',
+      enrichmentConflicts: 'crm_enrichment_conflicts'
     };
 
     function loadState() {
       try {
         const contactsData = localStorage.getItem(STORAGE_KEYS.contacts);
         const interactionsData = localStorage.getItem(STORAGE_KEYS.interactions);
+        const linkedinData = localStorage.getItem(STORAGE_KEYS.linkedinData);
+        const conflictsData = localStorage.getItem(STORAGE_KEYS.enrichmentConflicts);
 
         if (contactsData) AppState.contacts = JSON.parse(contactsData);
         if (interactionsData) AppState.interactions = JSON.parse(interactionsData);
+        if (linkedinData) AppState.linkedinData = JSON.parse(linkedinData);
+        if (conflictsData) AppState.enrichmentConflicts = JSON.parse(conflictsData);
       } catch (error) {
         console.error('Error loading data from localStorage:', error);
         showToast('Error loading data', 'error');
@@ -1159,6 +1167,8 @@
       try {
         localStorage.setItem(STORAGE_KEYS.contacts, JSON.stringify(AppState.contacts));
         localStorage.setItem(STORAGE_KEYS.interactions, JSON.stringify(AppState.interactions));
+        localStorage.setItem(STORAGE_KEYS.linkedinData, JSON.stringify(AppState.linkedinData));
+        localStorage.setItem(STORAGE_KEYS.enrichmentConflicts, JSON.stringify(AppState.enrichmentConflicts));
         localStorage.setItem(STORAGE_KEYS.version, '1.0');
       } catch (error) {
         console.error('Error saving data to localStorage:', error);
@@ -1208,7 +1218,11 @@
         phone: contactData.phone || '',
         email: contactData.email || '',
         linkedin: contactData.linkedin || '',
+        company: contactData.company || '',
+        position: contactData.position || '',
+        location: contactData.location || '',
         industry: contactData.industry || '',
+        notes: contactData.notes || '',
         birthdayMonth: contactData.birthdayMonth || '',
         birthdayDay: contactData.birthdayDay || '',
         // Keep old birthday field for backwards compatibility
@@ -1222,6 +1236,12 @@
       };
 
       AppState.contacts.push(contact);
+      
+      // Auto-enrich if LinkedIn URL provided
+      if (contact.linkedin) {
+        autoEnrichContact(contact.id);
+      }
+      
       saveState();
       return contact;
     }
@@ -1253,11 +1273,19 @@
       const index = AppState.contacts.findIndex(c => c.id === id);
       if (index === -1) return null;
 
+      const oldLinkedIn = AppState.contacts[index].linkedin;
+      
       AppState.contacts[index] = {
         ...AppState.contacts[index],
         ...updates,
         updatedAt: Date.now()
       };
+
+      // Auto-enrich if LinkedIn URL was added or changed
+      const newLinkedIn = AppState.contacts[index].linkedin;
+      if (newLinkedIn && newLinkedIn !== oldLinkedIn) {
+        autoEnrichContact(id);
+      }
 
       saveState();
       return AppState.contacts[index];
@@ -1495,6 +1523,7 @@
       'add-contact': renderContactForm,
       'contact': renderContactDetail,
       'edit-contact': renderContactForm,
+      'enrichment-conflicts': renderEnrichmentConflicts,
       'settings': renderSettings
     };
 
@@ -2047,6 +2076,20 @@
             <h1 class="view-title">Contacts (${AppState.contacts.length})</h1>
           </div>
 
+          ${AppState.enrichmentConflicts.length > 0 ? `
+            <div style="padding: var(--spacing-md); background: #FEF3C7; border: 1px solid #FCD34D; border-radius: var(--border-radius); margin-bottom: var(--spacing-md);">
+              <div style="display: flex; align-items: center; gap: 0.5rem; color: #92400E; font-weight: 600; margin-bottom: 0.25rem;">
+                <span>⚠️</span> ${AppState.enrichmentConflicts.length} contact(s) have data conflicts
+              </div>
+              <div style="font-size: 0.875rem; color: #78350F; margin-bottom: 0.5rem;">
+                LinkedIn data differs from your current information. Review and resolve conflicts.
+              </div>
+              <button class="btn btn-small" onclick="navigateTo('enrichment-conflicts')" style="font-size: 0.875rem; padding: 0.375rem 0.75rem; min-height: 32px;">
+                Review Conflicts
+              </button>
+            </div>
+          ` : ''}
+
           <!-- Search Bar -->
           <div class="form-group">
             <input
@@ -2316,6 +2359,24 @@
                   <span style="font-size: 0.8125rem;">${escapeHtml(contact.industry)}</span>
                 </div>
               ` : ''}
+              ${contact.company ? `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="min-width: 70px; font-weight: 600; color: var(--color-text-secondary); font-size: 0.8125rem;">Company</span>
+                  <span style="font-size: 0.8125rem;">${escapeHtml(contact.company)}</span>
+                </div>
+              ` : ''}
+              ${contact.position ? `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="min-width: 70px; font-weight: 600; color: var(--color-text-secondary); font-size: 0.8125rem;">Position</span>
+                  <span style="font-size: 0.8125rem;">${escapeHtml(contact.position)}</span>
+                </div>
+              ` : ''}
+              ${contact.location ? `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="min-width: 70px; font-weight: 600; color: var(--color-text-secondary); font-size: 0.8125rem;">Location</span>
+                  <span style="font-size: 0.8125rem;">${escapeHtml(contact.location)}</span>
+                </div>
+              ` : ''}
               ${contact.birthdayMonth && contact.birthdayDay ? `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                   <span style="min-width: 70px; font-weight: 600; color: var(--color-text-secondary); font-size: 0.8125rem;">Birthday</span>
@@ -2339,6 +2400,14 @@
               </div>
             </div>
           </div>
+
+          ${contact.notes ? `
+            <!-- Notes -->
+            <div class="card mb-lg">
+              <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: var(--spacing-sm); color: var(--color-text-secondary);">Notes</h3>
+              <p style="white-space: pre-wrap; font-size: 0.9375rem; line-height: 1.6; color: var(--color-text-primary);">${escapeHtml(contact.notes)}</p>
+            </div>
+          ` : ''}
 
           <!-- Log Interaction Button -->
           <button class="btn btn-block mb-lg" onclick="openInteractionModal('${contact.id}')">
@@ -2600,6 +2669,45 @@
               </div>
             </div>
 
+            <!-- Company and Position -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Company</label>
+                <input
+                  type="text"
+                  id="contact-company"
+                  name="company"
+                  class="form-input"
+                  placeholder="e.g., Google, Microsoft"
+                  value="${contact ? escapeHtml(contact.company || '') : ''}"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Position</label>
+                <input
+                  type="text"
+                  id="contact-position"
+                  name="position"
+                  class="form-input"
+                  placeholder="e.g., Software Engineer"
+                  value="${contact ? escapeHtml(contact.position || '') : ''}"
+                />
+              </div>
+            </div>
+
+            <!-- Location -->
+            <div class="form-group">
+              <label class="form-label">Location</label>
+              <input
+                type="text"
+                id="contact-location"
+                name="location"
+                class="form-input"
+                placeholder="e.g., San Francisco, CA"
+                value="${contact ? escapeHtml(contact.location || '') : ''}"
+              />
+            </div>
+
             <!-- Birthday -->
             <div class="form-group">
               <label class="form-label">Birthday</label>
@@ -2659,6 +2767,19 @@
                 />
               </div>
               <input type="hidden" id="contact-frequency" name="contactFrequency" value="${contact?.contactFrequency || ''}" />
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea
+                id="contact-notes"
+                name="notes"
+                class="form-input"
+                placeholder="Any additional notes about this contact..."
+                rows="4"
+                style="resize: vertical; min-height: 100px;"
+              >${contact?.notes || ''}</textarea>
             </div>
 
             <!-- Submit Button -->
@@ -3512,6 +3633,93 @@
 
     /* ===== SETTINGS VIEW ===== */
 
+    function renderEnrichmentConflicts() {
+      const app = document.getElementById('app');
+
+      if (AppState.enrichmentConflicts.length === 0) {
+        app.innerHTML = `
+          <div class="view">
+            <div class="view-header" style="display: flex; align-items: center; gap: 1rem;">
+              <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="navigateTo('contacts')">
+                ← Back
+              </button>
+              <h1 class="view-title" style="margin: 0;">Data Conflicts</h1>
+            </div>
+            <div class="empty-state">
+              <div class="empty-state-icon" style="font-size: 2rem; color: var(--color-success);">✓</div>
+              <h2>No Conflicts</h2>
+              <p class="text-muted">All your contact data is in sync!</p>
+              <button class="btn mt-md" onclick="navigateTo('contacts')">Back to Contacts</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      app.innerHTML = `
+        <div class="view">
+          <div class="view-header" style="display: flex; align-items: center; gap: 1rem;">
+            <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="navigateTo('contacts')">
+              ← Back
+            </button>
+            <h1 class="view-title" style="margin: 0;">Resolve Data Conflicts</h1>
+          </div>
+
+          <div style="padding: var(--spacing-md); background: #FEF3C7; border: 1px solid #FCD34D; border-radius: var(--border-radius); margin-bottom: var(--spacing-lg);">
+            <div style="font-weight: 600; color: #92400E; margin-bottom: 0.25rem;">
+              ${AppState.enrichmentConflicts.length} contact(s) with conflicts
+            </div>
+            <div style="font-size: 0.875rem; color: #78350F;">
+              For each field, choose whether to keep your current value or use the LinkedIn data.
+            </div>
+          </div>
+
+          ${AppState.enrichmentConflicts.map(conflictData => {
+            const contact = AppState.contacts.find(c => c.id === conflictData.contactId);
+            if (!contact) return '';
+
+            return `
+              <div class="card mb-md">
+                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: var(--spacing-md); color: var(--color-text-primary);">
+                  ${escapeHtml(getFullName(contact))}
+                </h3>
+
+                ${conflictData.conflicts.map(conflict => `
+                  <div style="padding: var(--spacing-md); background: var(--color-background); border-radius: var(--border-radius); margin-bottom: var(--spacing-md);">
+                    <div style="font-weight: 600; margin-bottom: var(--spacing-sm); color: var(--color-text-primary);">
+                      ${conflict.label}
+                    </div>
+                    
+                    <div style="display: grid; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                      <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm); background: var(--color-surface); border-radius: var(--border-radius); border: 2px solid var(--color-border);">
+                        <div style="flex: 1;">
+                          <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-bottom: 0.125rem;">YOUR CURRENT VALUE</div>
+                          <div style="font-weight: 500;">${escapeHtml(conflict.current)}</div>
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="resolveConflict('${conflictData.contactId}', '${conflict.field}', false)">
+                          Keep This
+                        </button>
+                      </div>
+                      
+                      <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm); background: var(--color-surface); border-radius: var(--border-radius); border: 2px solid #DBEAFE;">
+                        <div style="flex: 1;">
+                          <div style="font-size: 0.75rem; color: #1E40AF; margin-bottom: 0.125rem;">LINKEDIN DATA</div>
+                          <div style="font-weight: 500;">${escapeHtml(conflict.new)}</div>
+                        </div>
+                        <button class="btn btn-small" onclick="resolveConflict('${conflictData.contactId}', '${conflict.field}', true)">
+                          Use This
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
     function renderSettings() {
       const app = document.getElementById('app');
 
@@ -3560,6 +3768,65 @@
               <strong>JSON:</strong> Full backup including contacts and interactions.<br>
               <strong>CSV:</strong> Import contacts from spreadsheet. <a href="#" onclick="downloadCSVTemplate(); return false;" style="color: var(--color-primary);">Download the template</a> to see required headers.
             </p>
+          </div>
+
+          <!-- LinkedIn Enrichment -->
+          <div class="card mb-lg">
+            <h2 class="mb-md" style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="background: #DBEAFE; color: #1E40AF; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600;">💼 LINKEDIN</span>
+              <span>LinkedIn Enrichment</span>
+            </h2>
+            
+            ${AppState.linkedinData.length > 0 ? `
+              <div style="padding: var(--spacing-md); background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: var(--border-radius); margin-bottom: var(--spacing-md);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: #065F46; font-weight: 600; margin-bottom: 0.25rem;">
+                  <span>✓</span> LinkedIn database loaded
+                </div>
+                <div style="font-size: 0.875rem; color: #047857;">
+                  ${AppState.linkedinData.length} profiles available for enrichment
+                </div>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: var(--spacing-md);">
+                <button class="btn btn-block" onclick="enrichAllContacts()">
+                  Enrich All Contacts
+                </button>
+                <button class="btn btn-secondary btn-block" onclick="document.getElementById('linkedin-file-input').click()">
+                  Re-upload LinkedIn CSV
+                </button>
+                <button class="btn btn-secondary btn-block" onclick="clearLinkedInData()" style="color: var(--color-danger);">
+                  Clear LinkedIn Data
+                </button>
+              </div>
+            ` : `
+              <p class="text-muted text-small mb-md">
+                Upload your LinkedIn connections CSV to create a reference database. When you add contacts with LinkedIn URLs, their company, position, and location will be automatically filled in.
+              </p>
+              
+              <div style="margin-bottom: var(--spacing-md);">
+                <button class="btn btn-block" onclick="document.getElementById('linkedin-file-input').click()">
+                  📊 Upload LinkedIn CSV
+                </button>
+              </div>
+              
+              <details style="padding: var(--spacing-md); background: var(--color-background); border-radius: var(--border-radius);">
+                <summary style="cursor: pointer; font-weight: 600; color: var(--color-primary); margin-bottom: var(--spacing-sm);">
+                  How to download your LinkedIn connections
+                </summary>
+                <ol style="margin-top: var(--spacing-sm); padding-left: 1.5rem; color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.6;">
+                  <li>Go to <strong>LinkedIn.com</strong> → <strong>Me</strong> → <strong>Settings & Privacy</strong></li>
+                  <li>Navigate to <strong>Data Privacy</strong> → <strong>Get a copy of your data</strong></li>
+                  <li>Select <strong>"Want something in particular?"</strong></li>
+                  <li>Check the box for <strong>Connections</strong></li>
+                  <li>Click <strong>Request archive</strong></li>
+                  <li>LinkedIn will email you a download link (usually within 10 minutes)</li>
+                  <li>Download and extract the ZIP file</li>
+                  <li>Upload the <strong>Connections.csv</strong> file here</li>
+                </ol>
+              </details>
+            `}
+            
+            <input type="file" id="linkedin-file-input" accept=".csv" style="display: none;" onchange="handleLinkedInCSVUpload(event)">
           </div>
 
           <!-- Danger Zone -->
@@ -3643,6 +3910,300 @@
 
       showToast('Sample data loaded');
       renderCurrentView();
+    }
+
+    /* ===== LINKEDIN ENRICHMENT SYSTEM ===== */
+
+    // Upload and parse LinkedIn CSV into reference database
+    function handleLinkedInCSVUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.name.endsWith('.csv')) {
+        showToast('Please select a CSV file', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const csv = e.target.result;
+        parseLinkedInCSV(csv);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseLinkedInCSV(csv) {
+      const lines = csv.split('\n');
+      if (lines.length < 2) {
+        showToast('CSV file appears to be empty', 'error');
+        return;
+      }
+
+      // Parse header row
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      // Find column indices (LinkedIn CSV format)
+      const urlIdx = headers.findIndex(h => h.toLowerCase().includes('url'));
+      const firstNameIdx = headers.findIndex(h => h.toLowerCase().includes('first name'));
+      const lastNameIdx = headers.findIndex(h => h.toLowerCase().includes('last name'));
+      const emailIdx = headers.findIndex(h => h.toLowerCase().includes('email'));
+      const companyIdx = headers.findIndex(h => h.toLowerCase().includes('company'));
+      const positionIdx = headers.findIndex(h => h.toLowerCase().includes('position'));
+      const connectedOnIdx = headers.findIndex(h => h.toLowerCase().includes('connected on'));
+
+      // Parse data rows
+      const linkedinRecords = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const values = parseCSVLine(line);
+        if (values.length < 2) continue;
+
+        const url = urlIdx >= 0 ? values[urlIdx]?.trim() : '';
+        if (!url) continue; // Skip if no LinkedIn URL
+
+        const record = {
+          url: url,
+          firstName: firstNameIdx >= 0 ? values[firstNameIdx]?.trim() : '',
+          lastName: lastNameIdx >= 0 ? values[lastNameIdx]?.trim() : '',
+          email: emailIdx >= 0 ? values[emailIdx]?.trim() : '',
+          company: companyIdx >= 0 ? values[companyIdx]?.trim() : '',
+          position: positionIdx >= 0 ? values[positionIdx]?.trim() : '',
+          connectedOn: connectedOnIdx >= 0 ? values[connectedOnIdx]?.trim() : ''
+        };
+
+        linkedinRecords.push(record);
+      }
+
+      if (linkedinRecords.length === 0) {
+        showToast('No valid LinkedIn data found in CSV', 'error');
+        return;
+      }
+
+      // Save to AppState and localStorage
+      AppState.linkedinData = linkedinRecords;
+      saveState();
+      
+      showToast(`LinkedIn reference database loaded: ${linkedinRecords.length} profiles`, 'success');
+      
+      // Clear file input
+      document.getElementById('linkedin-file-input').value = '';
+      
+      renderCurrentView();
+    }
+
+    function parseCSVLine(line) {
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current);
+
+      return values.map(v => v.replace(/^"|"$/g, ''));
+    }
+
+    // Extract LinkedIn username from various URL formats
+    function extractLinkedInUsername(url) {
+      if (!url) return null;
+      
+      // Handle various LinkedIn URL formats:
+      // https://www.linkedin.com/in/username
+      // https://linkedin.com/in/username/
+      // www.linkedin.com/in/username
+      const match = url.match(/linkedin\.com\/in\/([^\/\?]+)/i);
+      return match ? match[1].toLowerCase() : null;
+    }
+
+    // Find LinkedIn data for a contact based on their LinkedIn URL
+    function findLinkedInData(linkedinUrl) {
+      if (!linkedinUrl || AppState.linkedinData.length === 0) return null;
+      
+      const username = extractLinkedInUsername(linkedinUrl);
+      if (!username) return null;
+
+      return AppState.linkedinData.find(record => {
+        const recordUsername = extractLinkedInUsername(record.url);
+        return recordUsername === username;
+      });
+    }
+
+    // Enrich a single contact with LinkedIn data
+    function enrichContact(contactId, options = {}) {
+      const contact = AppState.contacts.find(c => c.id === contactId);
+      if (!contact || !contact.linkedin) return null;
+
+      const linkedinData = findLinkedInData(contact.linkedin);
+      if (!linkedinData) return null;
+
+      const conflicts = [];
+      const updates = {};
+
+      // Check each field for conflicts or updates
+      const fieldsToCheck = [
+        { key: 'company', label: 'Company' },
+        { key: 'position', label: 'Position' },
+        { key: 'location', label: 'Location' }
+      ];
+
+      fieldsToCheck.forEach(field => {
+        const currentValue = contact[field.key]?.trim();
+        const newValue = linkedinData[field.key]?.trim();
+
+        if (newValue && newValue !== currentValue) {
+          if (currentValue && currentValue !== newValue) {
+            // Conflict: both values exist and differ
+            conflicts.push({
+              field: field.key,
+              label: field.label,
+              current: currentValue,
+              new: newValue
+            });
+          } else if (!currentValue) {
+            // No conflict: field is empty, just fill it
+            updates[field.key] = newValue;
+          }
+        }
+      });
+
+      // Handle Connected On date (always add to notes if not present)
+      if (linkedinData.connectedOn && !contact.notes?.includes('Connected on LinkedIn:')) {
+        const noteAddition = `Connected on LinkedIn: ${linkedinData.connectedOn}`;
+        updates.notes = contact.notes ? `${contact.notes}\n${noteAddition}` : noteAddition;
+      }
+
+      // If auto-resolve is enabled, overwrite conflicts
+      if (options.autoResolve) {
+        conflicts.forEach(conflict => {
+          updates[conflict.field] = conflict.new;
+        });
+        return { updates, conflicts: [] };
+      }
+
+      return { updates, conflicts };
+    }
+
+    // Enrich all contacts with LinkedIn URLs
+    function enrichAllContacts(autoResolve = false) {
+      const contactsWithLinkedIn = AppState.contacts.filter(c => c.linkedin);
+      
+      if (contactsWithLinkedIn.length === 0) {
+        showToast('No contacts have LinkedIn URLs', 'warning');
+        return;
+      }
+
+      if (AppState.linkedinData.length === 0) {
+        showToast('Please upload LinkedIn CSV first', 'error');
+        return;
+      }
+
+      let enriched = 0;
+      let conflictsFound = [];
+
+      contactsWithLinkedIn.forEach(contact => {
+        const result = enrichContact(contact.id, { autoResolve });
+        
+        if (result) {
+          // Apply non-conflicting updates
+          if (Object.keys(result.updates).length > 0) {
+            Object.assign(contact, result.updates);
+            enriched++;
+          }
+
+          // Track conflicts for user review
+          if (result.conflicts.length > 0) {
+            conflictsFound.push({
+              contactId: contact.id,
+              contactName: `${contact.firstName} ${contact.lastName}`,
+              conflicts: result.conflicts
+            });
+          }
+        }
+      });
+
+      // Save conflicts and updated contacts
+      AppState.enrichmentConflicts = conflictsFound;
+      saveState();
+
+      // Show results
+      if (enriched > 0) {
+        showToast(`Enriched ${enriched} contact(s) with LinkedIn data`, 'success');
+      }
+      
+      if (conflictsFound.length > 0) {
+        showToast(`${conflictsFound.length} contact(s) have conflicts - check Contacts page`, 'warning');
+      }
+
+      if (enriched === 0 && conflictsFound.length === 0) {
+        showToast('No new data to enrich', 'info');
+      }
+
+      renderCurrentView();
+    }
+
+    // Auto-enrich when adding/editing contact with LinkedIn URL
+    function autoEnrichContact(contactId) {
+      const result = enrichContact(contactId, { autoResolve: false });
+      
+      if (result && Object.keys(result.updates).length > 0) {
+        const contact = AppState.contacts.find(c => c.id === contactId);
+        Object.assign(contact, result.updates);
+        saveState();
+        return true;
+      }
+      
+      return false;
+    }
+
+    // Resolve a specific conflict
+    function resolveConflict(contactId, field, useNew) {
+      const contact = AppState.contacts.find(c => c.id === contactId);
+      const conflictIndex = AppState.enrichmentConflicts.findIndex(c => c.contactId === contactId);
+      
+      if (!contact || conflictIndex === -1) return;
+
+      const conflictData = AppState.enrichmentConflicts[conflictIndex];
+      const conflict = conflictData.conflicts.find(c => c.field === field);
+      
+      if (!conflict) return;
+
+      if (useNew) {
+        contact[field] = conflict.new;
+      }
+
+      // Remove this conflict from the list
+      conflictData.conflicts = conflictData.conflicts.filter(c => c.field !== field);
+      
+      // If no more conflicts for this contact, remove the entry
+      if (conflictData.conflicts.length === 0) {
+        AppState.enrichmentConflicts.splice(conflictIndex, 1);
+      }
+
+      saveState();
+      renderCurrentView();
+    }
+
+    // Clear LinkedIn reference database
+    function clearLinkedInData() {
+      if (confirm('This will remove the LinkedIn reference database. You can re-upload the CSV anytime. Continue?')) {
+        AppState.linkedinData = [];
+        AppState.enrichmentConflicts = [];
+        saveState();
+        showToast('LinkedIn reference database cleared', 'success');
+        renderCurrentView();
+      }
     }
 
     /* ===== AUTOMATIC BACKUP ===== */
