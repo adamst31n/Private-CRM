@@ -151,6 +151,13 @@
     body.dark-mode .card:hover {
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
     }
+    
+    body.dark-mode .card-clickable:hover, 
+    body.dark-mode .card-clickable:active {
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      background: var(--color-surface-elevated);
+      border-color: var(--color-primary);
+    }
 
     /* Dark mode slide menu */
     body.dark-mode .slide-menu {
@@ -531,7 +538,7 @@
       position: absolute;
       right: 0;
       top: 100%;
-      margin-top: 0.25rem;
+      margin-top: 0.5rem;
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--border-radius);
@@ -539,8 +546,9 @@
       box-shadow: var(--shadow-lg);
       z-index: 100;
       font-size: 0.875rem;
-      width: 85%;
-      max-width: 280px;
+      width: 90%;
+      max-width: 320px;
+      min-width: 240px;
     }
 
     .activity-item:hover .activity-tooltip {
@@ -552,7 +560,7 @@
       top: auto;
       bottom: 100%;
       margin-top: 0;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.5rem;
     }
 
     /* Activity scroll container */
@@ -694,6 +702,255 @@
     .header-btn-add:active {
       background: var(--color-primary-dark);
       transform: scale(0.98);
+    }
+
+    /* User Menu */
+    .user-menu-container {
+      position: relative;
+    }
+
+    .user-menu-trigger {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .user-menu-trigger:hover {
+      background: var(--color-surface);
+      border-color: var(--color-text-secondary);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--color-primary);
+    }
+
+    .user-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-menu-arrow {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      transition: transform 0.2s ease;
+    }
+
+    .user-menu-container.open .user-menu-arrow {
+      transform: rotate(180deg);
+    }
+
+    .user-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      min-width: 240px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all 0.2s ease;
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    .user-menu-container.open .user-menu-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .user-menu-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-menu-header .user-avatar {
+      width: 40px;
+      height: 40px;
+    }
+
+    .user-menu-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-menu-name {
+      font-weight: 600;
+      color: var(--color-text-primary);
+      font-size: 0.9375rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-menu-email {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-menu-items {
+      padding: 0.5rem 0;
+    }
+
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--color-text-primary);
+      font-size: 0.9375rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      text-align: left;
+    }
+
+    .user-menu-item:hover {
+      background: var(--color-background);
+    }
+
+    .user-menu-item-icon {
+      font-size: 1.125rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .user-menu-divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: 0.5rem 0;
+    }
+
+    .user-menu-item-danger {
+      color: var(--color-danger);
+    }
+
+    .user-menu-item-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Sign In Button (when logged out) */
+    .header-signin-btn {
+      padding: 0.5rem 1rem;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .header-signin-btn:hover {
+      background: var(--color-primary-dark);
+    }
+
+    /* Floating Action Button (FAB) */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 2.25rem;
+      font-weight: 300;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .fab:hover {
+      background: var(--color-primary-light);
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.5);
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+    }
+
+    body.dark-mode .fab {
+      background: var(--color-primary);
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+    }
+
+    body.dark-mode .fab:hover {
+      background: var(--color-primary-light);
+      box-shadow: 0 8px 20px rgba(96, 165, 250, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      .fab {
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 52px;
+        height: 52px;
+      }
+      
+      /* Stack Needs Attention columns on mobile */
+      .needs-attention-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+      }
+    }
+
+    /* Needs Attention Grid - desktop */
+    .needs-attention-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* Hide on mobile */
+    @media (max-width: 480px) {
+      .user-name {
+        display: none;
+      }
+
+      .user-menu-trigger {
+        padding: 0.25rem;
+      }
     }
 
     /* Hamburger Menu Overlay */
@@ -1204,21 +1461,46 @@
         ☰
       </button>
     </div>
-    <span class="header-title" onclick="navigateTo('dashboard')"><span class="brand-icon">👥</span> Personal CRM</span>
+    <span class="header-title" id="header-title"><span class="brand-icon">👥</span> Personal CRM</span>
     <div class="header-spacer"></div>
     <div class="header-actions">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
-        <span id="theme-icon">🌙</span>
-      </button>
-      <button class="header-btn header-btn-add" onclick="navigateTo('add-contact')" aria-label="Add contact">
-        +
-      </button>
-      <button id="auth-button" class="header-btn" onclick="handleGoogleSignIn()" aria-label="Sign in" style="display: none;">
+      <!-- Sign In Button (shown when logged out, hidden on login screen) -->
+      <button id="auth-button" class="header-signin-btn" onclick="handleGoogleSignIn()" style="display: none;">
         Sign In
       </button>
-      <button id="signout-button" class="header-btn" onclick="handleSignOut()" aria-label="Sign out" style="display: none;">
-        Sign Out
-      </button>
+
+      <!-- User Menu (shown when logged in) -->
+      <div id="user-menu" class="user-menu-container" style="display: none;">
+        <button class="user-menu-trigger" onclick="toggleUserMenu()">
+          <img id="user-avatar" class="user-avatar" src="" alt="Profile" />
+          <span id="user-name-display" class="user-name"></span>
+          <span class="user-menu-arrow">▼</span>
+        </button>
+        <div class="user-menu-dropdown">
+          <div class="user-menu-header">
+            <img id="user-avatar-large" class="user-avatar" src="" alt="Profile" />
+            <div class="user-menu-info">
+              <div id="user-menu-name" class="user-menu-name"></div>
+              <div id="user-menu-email" class="user-menu-email"></div>
+            </div>
+          </div>
+          <div class="user-menu-items">
+            <button class="user-menu-item" onclick="handleUserMenuAction('add-contact')">
+              <span class="user-menu-item-icon">➕</span>
+              <span>Add Contact</span>
+            </button>
+            <button class="user-menu-item" onclick="handleUserMenuAction('toggle-theme')">
+              <span class="user-menu-item-icon" id="menu-theme-icon">🌙</span>
+              <span id="menu-theme-text">Dark Mode</span>
+            </button>
+            <div class="user-menu-divider"></div>
+            <button class="user-menu-item user-menu-item-danger" onclick="handleUserMenuAction('sign-out')">
+              <span class="user-menu-item-icon">🚪</span>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -1942,18 +2224,6 @@
     }
 
     function renderCurrentView() {
-      // Update auth button visibility
-      const authButton = document.getElementById('auth-button');
-      const signoutButton = document.getElementById('signout-button');
-      
-      if (currentUser) {
-        authButton.style.display = 'none';
-        signoutButton.style.display = 'block';
-      } else {
-        authButton.style.display = 'block';
-        signoutButton.style.display = 'none';
-      }
-
       // Show login screen if not authenticated
       if (!currentUser) {
         renderLoginScreen();
@@ -2168,7 +2438,7 @@
             <div class="card card-attention" style="margin-bottom: 0; ${(needsAttentionProfessional.length > 0 || needsAttentionPersonal.length > 0) ? 'border-left: 3px solid var(--color-warning);' : 'opacity: 0.6;'}">
               <h2 class="section-title">Needs Attention</h2>
               ${(needsAttentionProfessional.length > 0 || needsAttentionPersonal.length > 0) ? `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="needs-attention-grid">
                   <!-- Professional Column -->
                   <div style="${needsAttentionProfessional.length === 0 ? 'opacity: 0.5;' : ''}">
                     <h3 style="font-size: 0.8125rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 2px solid var(--color-primary);">
@@ -2627,6 +2897,11 @@
             </div>
           `}
           </div>
+          
+          <!-- Floating Action Button -->
+          <button class="fab" onclick="navigateTo('add-contact')" aria-label="Add contact" title="Add Contact">
+            <span style="display: block; transform: translateY(-1px);">+</span>
+          </button>
         </div>
       `;
     }
@@ -3277,6 +3552,11 @@
         const emailError = document.getElementById('email-error');
 
         if (phoneInput) {
+          // Format existing phone number on load
+          if (phoneInput.value) {
+            phoneInput.value = formatPhoneNumber(phoneInput.value);
+          }
+          
           phoneInput.addEventListener('blur', () => {
             const digits = phoneInput.value.replace(/\D/g, '');
             if (phoneInput.value && digits.length !== 10) {
@@ -3325,66 +3605,80 @@
 
     function handleContactFormSubmit(event) {
       event.preventDefault();
+      console.log('📝 Form submitted');
 
-      const formData = new FormData(event.target);
-      const contactFrequencyValue = formData.get('contactFrequency');
-      const data = {
-        firstName: formData.get('firstName').trim(),
-        lastName: formData.get('lastName').trim(),
-        relationshipType: formData.get('relationshipType'),
-        howWeMet: formData.get('howWeMet').trim(),
-        phone: formData.get('phone').trim(),
-        email: formData.get('email').trim(),
-        linkedin: formData.get('linkedin').trim(),
-        industry: formData.get('industry').trim(),
-        birthdayMonth: formData.get('birthdayMonth'),
-        birthdayDay: formData.get('birthdayDay'),
-        contactFrequency: contactFrequencyValue ? parseInt(contactFrequencyValue) : null
-      };
+      try {
+        const formData = new FormData(event.target);
+        const contactFrequencyValue = formData.get('contactFrequency');
+        const data = {
+          firstName: formData.get('firstName').trim(),
+          lastName: formData.get('lastName').trim(),
+          relationshipType: formData.get('relationshipType'),
+          howWeMet: formData.get('howWeMet').trim(),
+          phone: formData.get('phone').trim(),
+          email: formData.get('email').trim(),
+          linkedin: formData.get('linkedin').trim(),
+          industry: formData.get('industry').trim(),
+          birthdayMonth: formData.get('birthdayMonth'),
+          birthdayDay: formData.get('birthdayDay'),
+          contactFrequency: contactFrequencyValue ? parseInt(contactFrequencyValue) : null
+        };
+        
+        console.log('📝 Form data:', data);
 
-      // Validate
-      if (!data.firstName) {
-        showToast('First name is required', 'error');
-        return;
-      }
+        // Validate
+        if (!data.firstName) {
+          showToast('First name is required', 'error');
+          return;
+        }
 
-      if (!data.relationshipType) {
-        showToast('Relationship type is required', 'error');
-        return;
-      }
+        if (!data.relationshipType) {
+          showToast('Relationship type is required', 'error');
+          return;
+        }
 
-      if (data.email && !validateEmail(data.email)) {
-        showToast('Invalid email address', 'error');
-        return;
-      }
+        if (data.email && !validateEmail(data.email)) {
+          showToast('Invalid email address', 'error');
+          return;
+        }
 
-      if (data.phone && !validatePhone(data.phone)) {
-        showToast('Invalid phone number', 'error');
-        return;
-      }
+        if (data.phone && !validatePhone(data.phone)) {
+          showToast('Invalid phone number', 'error');
+          return;
+        }
 
-      // Validate birthday day (max 31)
-      if (data.birthdayDay && (parseInt(data.birthdayDay) < 1 || parseInt(data.birthdayDay) > 31)) {
-        showToast('Birthday day must be between 1 and 31', 'error');
-        return;
-      }
+        // Validate birthday day (max 31)
+        if (data.birthdayDay && (parseInt(data.birthdayDay) < 1 || parseInt(data.birthdayDay) > 31)) {
+          showToast('Birthday day must be between 1 and 31', 'error');
+          return;
+        }
 
-      // Validate birthday - if one is provided, both must be
-      if ((data.birthdayMonth && !data.birthdayDay) || (!data.birthdayMonth && data.birthdayDay)) {
-        showToast('Please enter both month and day for birthday', 'error');
-        return;
-      }
+        // Validate birthday - if one is provided, both must be
+        if ((data.birthdayMonth && !data.birthdayDay) || (!data.birthdayMonth && data.birthdayDay)) {
+          showToast('Please enter both month and day for birthday', 'error');
+          return;
+        }
 
-      // Save
-      const isEdit = AppState.currentView === 'edit-contact';
-      if (isEdit) {
-        updateContact(AppState.selectedContactId, data);
-        showToast('Contact updated');
-        navigateTo('contact', { id: AppState.selectedContactId });
-      } else {
-        const newContact = addContact(data);
-        showToast('Contact added');
-        navigateTo('contact', { id: newContact.id });
+        console.log('✅ Validation passed');
+
+        // Save
+        const isEdit = AppState.currentView === 'edit-contact';
+        if (isEdit) {
+          console.log('✏️ Updating contact:', AppState.selectedContactId);
+          updateContact(AppState.selectedContactId, data);
+          showToast('Contact updated');
+          navigateTo('contact', { id: AppState.selectedContactId });
+        } else {
+          console.log('➕ Adding new contact');
+          const newContact = addContact(data);
+          console.log('✅ Contact added with ID:', newContact.id);
+          console.log('📊 Total contacts now:', AppState.contacts.length);
+          showToast('Contact added');
+          navigateTo('contact', { id: newContact.id });
+        }
+      } catch (error) {
+        console.error('❌ Error in handleContactFormSubmit:', error);
+        showToast('Error saving contact: ' + error.message, 'error');
       }
     }
 
@@ -4772,17 +5066,19 @@
 
       if (isDark) {
         document.body.classList.add('dark-mode');
-        document.getElementById('theme-icon').textContent = '☀️';
       } else {
         document.body.classList.remove('dark-mode');
-        document.getElementById('theme-icon').textContent = '🌙';
       }
+      
+      // Update menu theme text if it exists (after DOM is loaded)
+      updateUserMenuThemeText();
     }
 
     function toggleTheme() {
       const isDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('relationship-crm-theme', isDark ? 'dark' : 'light');
-      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      // Update user menu theme text
+      updateUserMenuThemeText();
     }
 
     /* ===== HAMBURGER MENU ===== */
@@ -4822,49 +5118,199 @@
       });
     }
 
+    /* ===== USER MENU ===== */
+
+    function toggleUserMenu() {
+      const container = document.getElementById('user-menu');
+      if (container) {
+        container.classList.toggle('open');
+      }
+    }
+
+    function closeUserMenu() {
+      const container = document.getElementById('user-menu');
+      if (container) {
+        container.classList.remove('open');
+      }
+    }
+
+    function handleUserMenuAction(action) {
+      closeUserMenu();
+
+      switch (action) {
+        case 'add-contact':
+          navigateTo('add-contact');
+          break;
+        case 'toggle-theme':
+          toggleTheme();
+          break;
+        case 'sign-out':
+          handleSignOut();
+          break;
+      }
+    }
+
+    function updateUserMenuThemeText() {
+      const isDark = document.body.classList.contains('dark-mode');
+      const themeIcon = document.getElementById('menu-theme-icon');
+      const themeText = document.getElementById('menu-theme-text');
+      if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌙';
+      if (themeText) themeText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+    }
+
+    function updateUserMenuDisplay() {
+      const authButton = document.getElementById('auth-button');
+      const userMenu = document.getElementById('user-menu');
+      const headerTitle = document.getElementById('header-title');
+
+      if (currentUser) {
+        // Hide sign in button, show user menu
+        if (authButton) authButton.style.display = 'none';
+        if (userMenu) {
+          userMenu.style.display = 'block';
+
+          // Populate user info
+          const avatar = document.getElementById('user-avatar');
+          const avatarLarge = document.getElementById('user-avatar-large');
+          const nameDisplay = document.getElementById('user-name-display');
+          const menuName = document.getElementById('user-menu-name');
+          const menuEmail = document.getElementById('user-menu-email');
+
+          const photoURL = currentUser.photoURL || '';
+          const displayName = currentUser.displayName || 'User';
+          const email = currentUser.email || '';
+          const firstName = displayName.split(' ')[0];
+
+          if (avatar) avatar.src = photoURL;
+          if (avatarLarge) avatarLarge.src = photoURL;
+          if (nameDisplay) nameDisplay.textContent = firstName;
+          if (menuName) menuName.textContent = displayName;
+          if (menuEmail) menuEmail.textContent = email;
+        }
+
+        // Make header title clickable when signed in
+        if (headerTitle) {
+          headerTitle.style.cursor = 'pointer';
+          headerTitle.onclick = () => navigateTo('dashboard');
+        }
+
+        // Update theme text in menu
+        updateUserMenuThemeText();
+      } else {
+        // Hide user menu and sign in button (login screen has its own button)
+        if (userMenu) userMenu.style.display = 'none';
+        if (authButton) authButton.style.display = 'none';
+        
+        // Make header title non-clickable when signed out
+        if (headerTitle) {
+          headerTitle.style.cursor = 'default';
+          headerTitle.onclick = null;
+        }
+      }
+    }
+
     /* ===== INITIALIZATION ===== */
 
     /* ===== INITIALIZATION ===== */
 
     function init() {
+      console.log('🚀 Initializing app...');
+      
       // Load theme preference (still uses localStorage - device-specific)
       loadTheme();
 
+      // Verify DOM is ready
+      const appElement = document.getElementById('app');
+      if (!appElement) {
+        console.error('❌ App element not found! DOM may not be ready.');
+        return;
+      }
+      
+      console.log('✅ App element found, rendering login screen...');
+
+      // Show login screen immediately while waiting for Firebase to initialize
+      // This prevents a blank screen on first load
+      try {
+        renderLoginScreen();
+        console.log('✅ Login screen rendered');
+      } catch (error) {
+        console.error('❌ Error rendering login screen:', error);
+      }
+
       // Set up Firebase authentication listener
       onAuthStateChanged(auth, async (user) => {
-        currentUser = user;
-        
-        if (user) {
-          console.log('User signed in:', user.displayName);
+        try {
+          currentUser = user;
+          console.log('🔥 Auth state changed. User:', user ? user.displayName : 'null');
           
-          // Load data from Firestore
-          await loadState();
-          
-          // Set up real-time sync
-          setupRealtimeSync();
-          
-          // Recalculate lastContactedAt for all contacts
-          recalculateAllLastContactedDates();
-          
-          // Force render to dashboard
-          AppState.currentView = 'dashboard';
-          renderCurrentView();
-          updateNavigation();
-        } else {
-          console.log('User signed out');
-          // Render login screen
-          AppState.currentView = 'dashboard';
-          renderCurrentView();
+          if (user) {
+            console.log('User signed in:', user.displayName);
+            
+            // Load data from Firestore
+            console.log('📥 Loading data from Firestore...');
+            await loadState();
+            console.log('✅ Data loaded successfully');
+            
+            // Set up real-time sync
+            console.log('🔄 Setting up real-time sync...');
+            setupRealtimeSync();
+            console.log('✅ Real-time sync active');
+            
+            // Recalculate lastContactedAt for all contacts
+            console.log('📊 Recalculating contact dates...');
+            recalculateAllLastContactedDates();
+            console.log('✅ Contact dates recalculated');
+            
+            // Force render to dashboard with proper UI update
+            console.log('🎨 Rendering dashboard...');
+            AppState.currentView = 'dashboard';
+            updateUserMenuDisplay(); // Update header UI first
+            renderCurrentView(); // Then render the view
+            updateNavigation();
+            console.log('✅ Dashboard rendered successfully');
+          } else {
+            console.log('User signed out - rendering login screen');
+            // Clear state and render login screen
+            AppState.currentView = 'dashboard';
+            updateUserMenuDisplay(); // Update header UI first
+            renderCurrentView(); // Then render login screen
+            console.log('✅ Login screen rendered');
+          }
+        } catch (error) {
+          console.error('❌ CRITICAL ERROR in auth state handler:', error);
+          console.error('Error stack:', error.stack);
+          // Try to render login screen as fallback
+          try {
+            renderLoginScreen();
+          } catch (fallbackError) {
+            console.error('❌ Even fallback failed:', fallbackError);
+          }
         }
       });
 
       // Set up hash change listener
       window.addEventListener('hashchange', handleHashChange);
 
+      // Close user menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu && userMenu.classList.contains('open')) {
+          if (!userMenu.contains(e.target)) {
+            closeUserMenu();
+          }
+        }
+      });
+
       // Keyboard shortcuts
       window.addEventListener('keydown', (e) => {
         // ESC to close modal or menu
         if (e.key === 'Escape') {
+          // Close user menu first
+          const userMenu = document.getElementById('user-menu');
+          if (userMenu && userMenu.classList.contains('open')) {
+            closeUserMenu();
+            return;
+          }
           const menu = document.getElementById('slide-menu');
           if (menu && menu.classList.contains('active')) {
             closeMenu();
@@ -4906,7 +5352,15 @@
         if (activityItem && activityItem.querySelector('.activity-tooltip')) {
           const rect = activityItem.getBoundingClientRect();
           const viewportHeight = window.innerHeight;
-          if (rect.top > viewportHeight * 0.5) {
+          const tooltip = activityItem.querySelector('.activity-tooltip');
+          
+          // Estimate tooltip height (300px is generous estimate)
+          const estimatedTooltipHeight = 300;
+          const spaceBelow = viewportHeight - rect.bottom;
+          const spaceAbove = rect.top;
+          
+          // Show above if there's not enough space below OR if we're in the bottom 40% of viewport
+          if (spaceBelow < estimatedTooltipHeight || rect.top > viewportHeight * 0.6) {
             activityItem.classList.add('tooltip-above');
           } else {
             activityItem.classList.remove('tooltip-above');
@@ -4939,6 +5393,9 @@
         toggleMenu,
         closeMenu,
         navigateFromMenu,
+        toggleUserMenu,
+        closeUserMenu,
+        handleUserMenuAction,
         deleteContact,
         updateContact,
         openInteractionModal,
@@ -4946,6 +5403,7 @@
         deleteInteraction,
         exportData,
         importData,
+        importCSV,
         clearAllData,
         handleGoogleSignIn,
         handleSignOut,
@@ -4956,6 +5414,8 @@
         clearLinkedInData,
         deleteContactWithConfirm,
         handleContactFormCancel,
+        handleContactFormSubmit,
+        handleFrequencySelectChange,
         handleInteractionSubmit,
         toggleContactMuted,
         toggleContactPriority,
@@ -4963,12 +5423,16 @@
         selectInteractionType,
         selectQuickDate,
         removeTaggedContact,
+        addTaggedContact,
+        updateQuickDateButtons,
+        renderContactList,
         openEditInteractionModal,
         deleteInteractionWithConfirm,
         duplicateInteraction,
         enrichAllContacts,
         downloadCSVTemplate,
-        exportCSV
+        exportCSV,
+        formatPhoneNumber
       };
       
       // Assign to both window and globalThis
