@@ -1213,6 +1213,12 @@
       <button class="header-btn header-btn-add" onclick="navigateTo('add-contact')" aria-label="Add contact">
         +
       </button>
+      <button id="auth-button" class="header-btn" onclick="handleGoogleSignIn()" aria-label="Sign in" style="display: none;">
+        Sign In
+      </button>
+      <button id="signout-button" class="header-btn" onclick="handleSignOut()" aria-label="Sign out" style="display: none;">
+        Sign Out
+      </button>
     </div>
   </header>
 
@@ -1264,8 +1270,50 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
     'use strict';
+
+    /* VERSION: 2.0-firebase-sync */
+    console.log('🔥 Personal CRM v2.0 - Firebase Sync Edition');
+
+    /* ===== FIREBASE IMPORTS & INITIALIZATION ===== */
+    
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithPopup, 
+      GoogleAuthProvider,
+      onAuthStateChanged,
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      setDoc, 
+      getDoc,
+      onSnapshot,
+      updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4nBZj7MpB2OVZcp1n1I_a3nBMD1734Is",
+      authDomain: "personal-crm-31132.firebaseapp.com",
+      projectId: "personal-crm-31132",
+      storageBucket: "personal-crm-31132.firebasestorage.app",
+      messagingSenderId: "9090875114",
+      appId: "1:9090875114:web:7d34502f46b16456f32193"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Authentication state
+    let currentUser = null;
+    let unsubscribeSnapshot = null;
 
     /* ===== STATE & DATA MODEL ===== */
 
@@ -1393,7 +1441,47 @@
       }, 3000);
     }
 
-    /* ===== LOCAL STORAGE FUNCTIONS ===== */
+
+    /* ===== FIREBASE AUTHENTICATION ===== */
+
+    async function handleGoogleSignIn() {
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+        showToast(`Welcome, ${result.user.displayName}!`, 'success');
+      } catch (error) {
+        console.error('Sign-in error:', error);
+        showToast('Sign-in failed. Please try again.', 'error');
+      }
+    }
+
+    async function handleSignOut() {
+      try {
+        // Unsubscribe from Firestore listener
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+          unsubscribeSnapshot = null;
+        }
+        
+        await signOut(auth);
+        currentUser = null;
+        
+        // Clear local state
+        AppState.contacts = [];
+        AppState.interactions = [];
+        AppState.linkedinData = [];
+        AppState.enrichmentConflicts = [];
+        
+        showToast('Signed out successfully', 'success');
+        renderCurrentView();
+      } catch (error) {
+        console.error('Sign-out error:', error);
+        showToast('Sign-out failed', 'error');
+      }
+    }
+
+    /* ===== FIREBASE STORAGE FUNCTIONS ===== */
 
     const STORAGE_KEYS = {
       contacts: 'crm_contacts',
@@ -1403,38 +1491,82 @@
       enrichmentConflicts: 'crm_enrichment_conflicts'
     };
 
-    function loadState() {
-      try {
-        const contactsData = localStorage.getItem(STORAGE_KEYS.contacts);
-        const interactionsData = localStorage.getItem(STORAGE_KEYS.interactions);
-        const linkedinData = localStorage.getItem(STORAGE_KEYS.linkedinData);
-        const conflictsData = localStorage.getItem(STORAGE_KEYS.enrichmentConflicts);
+    // Load data from Firestore
+    async function loadState() {
+      if (!currentUser) {
+        console.log('No user logged in, skipping Firestore load');
+        return;
+      }
 
-        if (contactsData) AppState.contacts = JSON.parse(contactsData);
-        if (interactionsData) AppState.interactions = JSON.parse(interactionsData);
-        if (linkedinData) AppState.linkedinData = JSON.parse(linkedinData);
-        if (conflictsData) AppState.enrichmentConflicts = JSON.parse(conflictsData);
+      try {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          AppState.contacts = data.contacts || [];
+          AppState.interactions = data.interactions || [];
+          AppState.linkedinData = data.linkedinData || [];
+          AppState.enrichmentConflicts = data.enrichmentConflicts || [];
+          console.log('Data loaded from Firestore');
+        } else {
+          console.log('No existing data in Firestore, starting fresh');
+        }
       } catch (error) {
-        console.error('Error loading data from localStorage:', error);
+        console.error('Error loading data from Firestore:', error);
         showToast('Error loading data', 'error');
       }
     }
 
-    function saveState() {
+    // Save data to Firestore
+    async function saveState() {
+      if (!currentUser) {
+        console.log('No user logged in, skipping Firestore save');
+        return;
+      }
+
       try {
-        localStorage.setItem(STORAGE_KEYS.contacts, JSON.stringify(AppState.contacts));
-        localStorage.setItem(STORAGE_KEYS.interactions, JSON.stringify(AppState.interactions));
-        localStorage.setItem(STORAGE_KEYS.linkedinData, JSON.stringify(AppState.linkedinData));
-        localStorage.setItem(STORAGE_KEYS.enrichmentConflicts, JSON.stringify(AppState.enrichmentConflicts));
-        localStorage.setItem(STORAGE_KEYS.version, '1.0');
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        await setDoc(userDocRef, {
+          contacts: AppState.contacts,
+          interactions: AppState.interactions,
+          linkedinData: AppState.linkedinData,
+          enrichmentConflicts: AppState.enrichmentConflicts,
+          version: '1.0',
+          lastUpdated: new Date().toISOString()
+        });
+        console.log('Data saved to Firestore');
       } catch (error) {
-        console.error('Error saving data to localStorage:', error);
-        if (error.name === 'QuotaExceededError') {
-          showToast('Storage full! Please export your data.', 'error');
+        console.error('Error saving data to Firestore:', error);
+        if (error.code === 'permission-denied') {
+          showToast('Permission denied. Please check Firestore rules.', 'error');
         } else {
           showToast('Error saving data', 'error');
         }
       }
+    }
+
+    // Set up real-time sync
+    function setupRealtimeSync() {
+      if (!currentUser) return;
+
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      
+      unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          AppState.contacts = data.contacts || [];
+          AppState.interactions = data.interactions || [];
+          AppState.linkedinData = data.linkedinData || [];
+          AppState.enrichmentConflicts = data.enrichmentConflicts || [];
+          
+          // Re-render current view to show updated data
+          renderCurrentView();
+          console.log('Data synced from Firestore');
+        }
+      }, (error) => {
+        console.error('Snapshot error:', error);
+      });
     }
 
     /* ===== DATA ACCESS LAYER - CONTACTS ===== */
@@ -1810,6 +1942,24 @@
     }
 
     function renderCurrentView() {
+      // Update auth button visibility
+      const authButton = document.getElementById('auth-button');
+      const signoutButton = document.getElementById('signout-button');
+      
+      if (currentUser) {
+        authButton.style.display = 'none';
+        signoutButton.style.display = 'block';
+      } else {
+        authButton.style.display = 'block';
+        signoutButton.style.display = 'none';
+      }
+
+      // Show login screen if not authenticated
+      if (!currentUser) {
+        renderLoginScreen();
+        return;
+      }
+
       const route = AppState.currentView;
       const renderer = Routes[route];
 
@@ -1825,6 +1975,50 @@
     }
 
     /* ===== VIEW RENDERERS ===== */
+
+    function renderLoginScreen() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - var(--nav-height)); padding: 2rem;">
+          <div style="max-width: 400px; text-align: center; background: var(--color-surface); padding: 3rem; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);">
+            <div style="font-size: 4rem; margin-bottom: 1.5rem;">👥</div>
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--color-text-primary);">Welcome to Personal CRM</h1>
+            <p style="color: var(--color-text-secondary); margin-bottom: 2rem;">Sign in to access your contacts and stay connected with people who matter.</p>
+            <button 
+              id="google-signin-btn"
+              style="
+                width: 100%;
+                padding: 1rem;
+                background: var(--color-primary);
+                color: white;
+                border: none;
+                border-radius: var(--border-radius);
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.2s;
+                box-shadow: var(--shadow-md);
+              "
+              onmouseover="this.style.background='var(--color-primary-light)'"
+              onmouseout="this.style.background='var(--color-primary)'"
+            >
+              🔐 Sign in with Google
+            </button>
+            <p style="margin-top: 2rem; font-size: 0.875rem; color: var(--color-text-secondary);">
+              Your data is securely stored and synced across all your devices.
+            </p>
+          </div>
+        </div>
+      `;
+      
+      // Attach event listener after DOM is created
+      setTimeout(() => {
+        const btn = document.getElementById('google-signin-btn');
+        if (btn) {
+          btn.addEventListener('click', handleGoogleSignIn);
+        }
+      }, 0);
+    }
 
     function renderDashboard() {
       const app = document.getElementById('app');
@@ -4306,28 +4500,6 @@
       renderCurrentView();
     }
 
-    function parseCSVLine(line) {
-      const values = [];
-      let current = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          values.push(current);
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      values.push(current);
-
-      return values.map(v => v.replace(/^"|"$/g, ''));
-    }
-
     // Extract LinkedIn username from various URL formats
     function extractLinkedInUsername(url) {
       if (!url) return null;
@@ -4652,15 +4824,39 @@
 
     /* ===== INITIALIZATION ===== */
 
+    /* ===== INITIALIZATION ===== */
+
     function init() {
-      // Load theme preference
+      // Load theme preference (still uses localStorage - device-specific)
       loadTheme();
 
-      // Load data from localStorage
-      loadState();
-
-      // Recalculate lastContactedAt for all contacts to fix any stale data
-      recalculateAllLastContactedDates();
+      // Set up Firebase authentication listener
+      onAuthStateChanged(auth, async (user) => {
+        currentUser = user;
+        
+        if (user) {
+          console.log('User signed in:', user.displayName);
+          
+          // Load data from Firestore
+          await loadState();
+          
+          // Set up real-time sync
+          setupRealtimeSync();
+          
+          // Recalculate lastContactedAt for all contacts
+          recalculateAllLastContactedDates();
+          
+          // Force render to dashboard
+          AppState.currentView = 'dashboard';
+          renderCurrentView();
+          updateNavigation();
+        } else {
+          console.log('User signed out');
+          // Render login screen
+          AppState.currentView = 'dashboard';
+          renderCurrentView();
+        }
+      });
 
       // Set up hash change listener
       window.addEventListener('hashchange', handleHashChange);
@@ -4704,7 +4900,7 @@
         }
       });
 
-      // Activity tooltip positioning - show above if item is in lower half of viewport
+      // Activity tooltip positioning
       document.addEventListener('mouseenter', (e) => {
         const activityItem = e.target.closest('.activity-item');
         if (activityItem && activityItem.querySelector('.activity-tooltip')) {
@@ -4718,23 +4914,84 @@
         }
       }, true);
 
-      // Initial render
-      handleHashChange();
-
-      // Set up automatic daily backup at midnight PST
+      // Set up automatic daily backup
       setupAutoBackup();
 
-      console.log('Relationship CRM initialized');
-      console.log('Contacts:', AppState.contacts.length);
-      console.log('Interactions:', AppState.interactions.length);
-      console.log('Auto-backup: Enabled (midnight PST daily)');
+      console.log('Relationship CRM initialized with Firebase');
       console.log('Keyboard shortcuts:');
       console.log('  - ESC: Close modal');
       console.log('  - Ctrl/Cmd + K: Search contacts');
       console.log('  - Ctrl/Cmd + N: New contact');
       console.log('  - Ctrl/Cmd + H: Dashboard');
-      console.log('  - window.loadSampleData(): Load sample data for testing');
     }
+
+    /* ===== EXPOSE FUNCTIONS TO WINDOW (CRITICAL FOR onclick HANDLERS) ===== */
+    // These MUST execute before HTML tries to use them
+    console.log('⚡ Step 1: About to expose functions...');
+    console.log('⚡ Step 2: Testing if navigateTo exists in module scope:', typeof navigateTo);
+    console.log('⚡ Step 3: Testing if window exists:', typeof window);
+    
+    try {
+      // Export ONLY functions that actually exist and are called from HTML
+      const functionsToExport = {
+        navigateTo,
+        toggleTheme,
+        toggleMenu,
+        closeMenu,
+        navigateFromMenu,
+        deleteContact,
+        updateContact,
+        openInteractionModal,
+        closeInteractionModal,
+        deleteInteraction,
+        exportData,
+        importData,
+        clearAllData,
+        handleGoogleSignIn,
+        handleSignOut,
+        loadSampleData,
+        handleLinkedInCSVUpload,
+        enrichContact,
+        resolveConflict,
+        clearLinkedInData,
+        deleteContactWithConfirm,
+        handleContactFormCancel,
+        handleInteractionSubmit,
+        toggleContactMuted,
+        toggleContactPriority,
+        toggleFilterType,
+        selectInteractionType,
+        selectQuickDate,
+        removeTaggedContact,
+        openEditInteractionModal,
+        deleteInteractionWithConfirm,
+        duplicateInteraction,
+        enrichAllContacts,
+        downloadCSVTemplate,
+        exportCSV
+      };
+      
+      // Assign to both window and globalThis
+      Object.keys(functionsToExport).forEach(name => {
+        window[name] = functionsToExport[name];
+        globalThis[name] = functionsToExport[name];
+      });
+      
+      console.log('✅ Step 4: Assignment complete!');
+      console.log('✅ Step 5: window.navigateTo type:', typeof window.navigateTo);
+      console.log('✅ Step 6: Exported', Object.keys(functionsToExport).length, 'functions');
+    } catch (error) {
+      console.error('❌ Error exposing functions:', error);
+    }
+
+
+
+    /* ===== EXPOSE FUNCTIONS TO WINDOW (FOR HTML onclick HANDLERS) ===== */
+    // Export functions to window BEFORE starting the app
+    
+    // Duplicate exports removed - handled above in try-catch block
+    
+    console.log('✅ All functions exposed to window');
 
     // Start the app when DOM is ready
     if (document.readyState === 'loading') {
