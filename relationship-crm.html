@@ -1744,6 +1744,12 @@
       const then = parseLocalDate(date);
       return then > now;
     }
+    
+    // Check if contact has any future interactions planned
+    function hasUpcomingInteraction(contactId) {
+      const interactions = getInteractionsByContact(contactId);
+      return interactions.some(interaction => isFutureDate(interaction.date));
+    }
 
     // Validation
     function validateEmail(email) {
@@ -2511,13 +2517,14 @@
                           const days = getDaysSinceLastContact(contact.id);
                           const status = getContactStatus(contact.id);
                           const statusText = days === null ? 'Never' : `${days}d`;
+                          const hasUpcoming = hasUpcomingInteraction(contact.id);
                           return `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0;" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0; ${hasUpcoming ? 'opacity: 0.6;' : ''}" onclick="navigateTo('contact', {id: '${contact.id}'})">
                               <div style="min-width: 0; flex: 1;">
-                                <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</div>
+                                <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${hasUpcoming ? 'color: var(--color-text-secondary);' : ''}">${escapeHtml(getFullName(contact))}</div>
                               </div>
-                              <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap;">
-                                ${statusText}
+                              <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap; ${hasUpcoming ? 'opacity: 0.7;' : ''}">
+                                ${hasUpcoming ? '📅 ' : ''}${statusText}
                               </div>
                             </div>
                           `;
@@ -2536,13 +2543,14 @@
                           const days = getDaysSinceLastContact(contact.id);
                           const status = getContactStatus(contact.id);
                           const statusText = days === null ? 'Never' : `${days}d`;
+                          const hasUpcoming = hasUpcomingInteraction(contact.id);
                           return `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0;" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0; ${hasUpcoming ? 'opacity: 0.6;' : ''}" onclick="navigateTo('contact', {id: '${contact.id}'})">
                               <div style="min-width: 0; flex: 1;">
-                                <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(getFullName(contact))}</div>
+                                <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${hasUpcoming ? 'color: var(--color-text-secondary);' : ''}">${escapeHtml(getFullName(contact))}</div>
                               </div>
-                              <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap;">
-                                ${statusText}
+                              <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap; ${hasUpcoming ? 'opacity: 0.7;' : ''}">
+                                ${hasUpcoming ? '📅 ' : ''}${statusText}
                               </div>
                             </div>
                           `;
@@ -5241,9 +5249,48 @@
           const displayName = currentUser.displayName || 'User';
           const email = currentUser.email || '';
           const firstName = displayName.split(' ')[0];
+          
+          // Get initials for fallback
+          const initials = displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-          if (avatar) avatar.src = photoURL;
-          if (avatarLarge) avatarLarge.src = photoURL;
+          // Set avatar with fallback
+          if (avatar) {
+            if (photoURL) {
+              avatar.src = photoURL;
+              avatar.style.display = 'block';
+              // Add error handler to show initials if image fails to load
+              avatar.onerror = () => {
+                avatar.style.display = 'none';
+                const initialsSpan = document.createElement('span');
+                initialsSpan.textContent = initials;
+                initialsSpan.style.cssText = 'width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;';
+                avatar.parentNode.insertBefore(initialsSpan, avatar);
+              };
+            } else {
+              // No photo URL, show initials
+              avatar.style.display = 'none';
+              const initialsSpan = document.createElement('span');
+              initialsSpan.textContent = initials;
+              initialsSpan.style.cssText = 'width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;';
+              avatar.parentNode.insertBefore(initialsSpan, avatar);
+            }
+          }
+          
+          if (avatarLarge) {
+            if (photoURL) {
+              avatarLarge.src = photoURL;
+              avatarLarge.onerror = () => {
+                avatarLarge.style.display = 'none';
+                const initialsSpan = document.createElement('span');
+                initialsSpan.textContent = initials;
+                initialsSpan.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;';
+                avatarLarge.parentNode.insertBefore(initialsSpan, avatarLarge);
+              };
+            } else {
+              avatarLarge.style.display = 'none';
+            }
+          }
+          
           if (nameDisplay) nameDisplay.textContent = firstName;
           if (menuName) menuName.textContent = displayName;
           if (menuEmail) menuEmail.textContent = email;
