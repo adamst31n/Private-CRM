@@ -1,0 +1,38 @@
+::1 - - [22/Jan/2026 10:38:43] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [22/Jan/2026 11:51:01] code 404, message File not found
+::1 - - [22/Jan/2026 11:51:01] code 404, message File not found
+::1 - - [22/Jan/2026 11:51:01] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [22/Jan/2026 11:51:01] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [22/Jan/2026 11:51:01] code 404, message File not found
+::1 - - [22/Jan/2026 11:51:01] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [22/Jan/2026 11:51:01] code 404, message File not found
+::1 - - [22/Jan/2026 11:51:01] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [22/Jan/2026 11:51:01] code 404, message File not found
+::1 - - [22/Jan/2026 11:51:01] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [22/Jan/2026 11:51:01] code 404, message File not found
+::1 - - [22/Jan/2026 11:51:01] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [22/Jan/2026 11:53:03] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [22/Jan/2026 11:53:49] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [22/Jan/2026 23:49:20] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 10:30:20] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 10:32:29] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 11:51:57] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 11:54:00] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 12:17:45] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 12:20:10] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 12:20:30] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 12:23:32] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 12:27:22] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 12:29:36] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 13:55:19] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 15:26:12] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [26/Jan/2026 15:27:12] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [27/Jan/2026 01:13:34] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [27/Jan/2026 11:47:55] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [27/Jan/2026 12:00:18] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [27/Jan/2026 12:40:02] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [27/Jan/2026 18:10:29] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [04/Feb/2026 10:39:55] "GET /relationship-crm.html HTTP/1.1" 200 -
+::1 - - [04/Feb/2026 10:39:56] code 404, message File not found
+::1 - - [04/Feb/2026 10:39:56] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [04/Feb/2026 10:44:12] "GET /relationship-crm.html HTTP/1.1" 200 -
