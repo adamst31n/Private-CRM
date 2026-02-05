@@ -70,9 +70,9 @@
 
     /* ===== DARK MODE ===== */
     body.dark-mode {
-      --color-background: #1F2937;
-      --color-surface: #374151;
-      --color-surface-elevated: #4B5563;
+      --color-background: #1a1f2e;
+      --color-surface: #2d3748;
+      --color-surface-elevated: #3d4b5f;
       --color-text-primary: #F9FAFB;
       --color-text-secondary: #9CA3AF;
       --color-border: #6B7280;
@@ -145,23 +145,171 @@
 
     /* Dark mode cards */
     body.dark-mode .card {
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(107, 114, 128, 0.3);
     }
 
     body.dark-mode .card:hover {
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
     }
     
     body.dark-mode .card-clickable:hover, 
     body.dark-mode .card-clickable:active {
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
       background: var(--color-surface-elevated);
       border-color: var(--color-primary);
+    }
+
+    /* Enhanced visual hierarchy for dashboard cards */
+
+    /* Priority/ASAP section - Most urgent, needs maximum prominence */
+    body.dark-mode .card-priority {
+      border: 2px solid rgba(239, 68, 68, 0.5);
+      box-shadow: 0 6px 24px rgba(239, 68, 68, 0.25),
+                  0 2px 8px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.08) 0%, 
+        var(--color-surface) 50%);
+    }
+
+    body.dark-mode .card-priority:hover {
+      box-shadow: 0 12px 40px rgba(239, 68, 68, 0.35),
+                  0 4px 12px rgba(0, 0, 0, 0.4);
+      transform: translateY(-3px);
+    }
+
+    /* Needs Attention section - Important but secondary to ASAP */
+    body.dark-mode .card-attention {
+      border: 1.5px solid rgba(234, 88, 12, 0.4);
+      box-shadow: 0 4px 20px rgba(234, 88, 12, 0.2),
+                  0 2px 6px rgba(0, 0, 0, 0.25);
+      background: linear-gradient(135deg, 
+        rgba(234, 88, 12, 0.05) 0%, 
+        var(--color-surface) 60%);
+    }
+
+    body.dark-mode .card-attention:hover {
+      box-shadow: 0 8px 28px rgba(234, 88, 12, 0.3),
+                  0 3px 10px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+
+    /* Activity section - Informational, should recede slightly */
+    body.dark-mode .card-activity {
+      border: 1px solid rgba(107, 114, 128, 0.25);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      background: var(--color-surface);
+    }
+
+    body.dark-mode .card-activity:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* Birthdays and Stats - Standard informational cards */
+    body.dark-mode .card-birthdays,
+    body.dark-mode .card-stats {
+      border: 1px solid rgba(107, 114, 128, 0.25);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    body.dark-mode .card-birthdays:hover,
+    body.dark-mode .card-stats:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* Section titles within priority cards get color treatment */
+    body.dark-mode .card-priority .section-title {
+      color: #FCA5A5;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    body.dark-mode .card-attention .section-title {
+      color: #FED7AA;
+      font-weight: 600;
     }
 
     /* Dark mode slide menu */
     body.dark-mode .slide-menu {
       box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Dark mode button improvements */
+    body.dark-mode .btn {
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border-light);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    body.dark-mode .btn:hover {
+      background: var(--color-surface-elevated);
+      border-color: var(--color-primary);
+      box-shadow: 0 2px 6px rgba(96, 165, 250, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    body.dark-mode .btn-primary {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: white;
+      box-shadow: 0 2px 8px rgba(96, 165, 250, 0.35);
+    }
+    
+    body.dark-mode .btn-primary:hover {
+      background: var(--color-primary-light);
+      border-color: var(--color-primary-light);
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.45);
+    }
+    
+    body.dark-mode .btn-danger {
+      background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+      border: 2px solid #DC2626;
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    body.dark-mode .btn-danger:hover {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      border-color: #EF4444;
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    /* Dark mode settings section improvements */
+    body.dark-mode .settings-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+    }
+    
+    /* Dark mode Needs Attention improvements */
+    body.dark-mode .card-attention {
+      background: var(--color-surface);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+    
+    body.dark-mode .needs-attention-grid > div {
+      padding: 1rem;
+      background: var(--color-background);
+      border-radius: 0.5rem;
+    }
+    
+    body.dark-mode .needs-attention-grid h3 {
+      color: var(--color-primary-light);
+      border-bottom-color: var(--color-primary) !important;
+    }
+    
+    /* Dark mode Priority/Contact ASAP section enhancements */
+    body.dark-mode .card[style*="border-left: 4px solid #EF4444"],
+    body.dark-mode .card[style*="border-left: 3px solid var(--color-danger)"] {
+      border-left-width: 4px !important;
+      border-left-color: #EF4444 !important;
+      background: linear-gradient(to right, rgba(239, 68, 68, 0.12), var(--color-surface));
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
     }
 
     /* Theme toggle button (in header) */
@@ -562,10 +710,64 @@
       margin-top: 0;
       margin-bottom: 0.5rem;
     }
+    
+    /* Contact card upcoming interaction tooltip */
+    .upcoming-indicator {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+    }
+    
+    .upcoming-tooltip {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      margin-bottom: 0.5rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius);
+      padding: 0.5rem 0.75rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      font-size: 0.75rem;
+      white-space: normal;
+      max-width: 280px;
+      min-width: 200px;
+      line-height: 1.4;
+      color: var(--color-text-primary);
+      font-weight: 400;
+      text-align: left;
+      pointer-events: none;
+    }
+    
+    .upcoming-indicator:hover .upcoming-tooltip {
+      display: block;
+    }
 
     /* Activity scroll container */
     .activity-scroll {
       overflow-y: auto;
+    }
+
+    /* Enhanced activity item contrast for dark mode */
+    body.dark-mode .activity-item {
+      background: var(--color-surface-elevated) !important;
+      border: 1px solid rgba(107, 114, 128, 0.3) !important;
+    }
+
+    body.dark-mode .activity-item:hover {
+      background: var(--color-surface-elevated) !important;
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Enhanced Activity card section headers in dark mode */
+    body.dark-mode .card-activity h3 {
+      font-weight: 700 !important;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-size: 0.75rem !important;
     }
 
     /* Contact profile layout */
@@ -888,7 +1090,8 @@
       font-weight: 300;
       line-height: 1;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45),
+                  0 2px 8px rgba(0, 0, 0, 0.15);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 50;
       display: flex;
@@ -902,7 +1105,8 @@
     .fab:hover {
       background: var(--color-primary-light);
       transform: scale(1.1);
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.5);
+      box-shadow: 0 12px 32px rgba(37, 99, 235, 0.55),
+                  0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .fab:active {
@@ -911,12 +1115,14 @@
 
     body.dark-mode .fab {
       background: var(--color-primary);
-      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+      box-shadow: 0 6px 20px rgba(96, 165, 250, 0.5),
+                  0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     body.dark-mode .fab:hover {
       background: var(--color-primary-light);
-      box-shadow: 0 8px 20px rgba(96, 165, 250, 0.5);
+      box-shadow: 0 12px 32px rgba(96, 165, 250, 0.6),
+                  0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
     @media (max-width: 768px) {
@@ -1340,6 +1546,26 @@
       color: white;
     }
 
+    /* Dark mode filter chip improvements */
+    body.dark-mode .filter-chip {
+      background: var(--color-surface-elevated);
+      border-color: var(--color-border);
+      color: var(--color-text-primary);
+    }
+
+    body.dark-mode .filter-chip:hover {
+      background: var(--color-surface-elevated);
+      border-color: var(--color-primary-light);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    }
+
+    body.dark-mode .filter-chip.selected {
+      background: var(--color-primary);
+      border-color: var(--color-primary-light);
+      color: white;
+      box-shadow: 0 2px 8px rgba(96, 165, 250, 0.35);
+    }
+
     /* Utilities */
     .text-center { text-align: center; }
     .text-muted { color: var(--color-text-secondary); }
@@ -1616,8 +1842,8 @@
   <script type="module">
     'use strict';
 
-    /* VERSION: 2.0-firebase-sync */
-    console.log('🔥 Personal CRM v2.0 - Firebase Sync Edition');
+    /* VERSION: 2.14 */
+    console.log('🔥 Personal CRM v2.14 - Firebase Sync Edition');
 
     /* ===== FIREBASE IMPORTS & INITIALIZATION ===== */
     
@@ -1711,6 +1937,19 @@
       const d = parseLocalDate(date);
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
+    
+    function formatDateShort(date) {
+      const d = typeof date === 'string' ? parseLocalDate(date) : date;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const diffTime = d - now;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Tomorrow';
+      if (diffDays < 7) return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
 
     function formatRelativeDate(date) {
       const now = new Date();
@@ -1749,6 +1988,23 @@
     function hasUpcomingInteraction(contactId) {
       const interactions = getInteractionsByContact(contactId);
       return interactions.some(interaction => isFutureDate(interaction.date));
+    }
+    
+    // Get the next upcoming interaction for a contact (returns null if none)
+    function getNextUpcomingInteraction(contactId) {
+      const interactions = getInteractionsByContact(contactId);
+      const upcomingInteractions = interactions.filter(interaction => isFutureDate(interaction.date));
+      
+      if (upcomingInteractions.length === 0) return null;
+      
+      // Sort by date (earliest first)
+      upcomingInteractions.sort((a, b) => {
+        const dateA = parseLocalDate(a.date);
+        const dateB = parseLocalDate(b.date);
+        return dateA - dateB;
+      });
+      
+      return upcomingInteractions[0];
     }
 
     // Validation
@@ -1958,7 +2214,6 @@
         linkedin: contactData.linkedin || '',
         company: contactData.company || '',
         position: contactData.position || '',
-        location: contactData.location || '',
         industry: contactData.industry || '',
         notes: contactData.notes || '',
         birthdayMonth: contactData.birthdayMonth || '',
@@ -2941,6 +3196,41 @@
                 const status = getContactStatus(contact.id);
                 const statusText = days === null ? 'Never' : days === 0 ? 'Today' : days === 1 ? '1d' : `${days}d`;
                 const priorityStyle = contact.priority ? 'background: linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent);' : '';
+                const upcomingInteraction = getNextUpcomingInteraction(contact.id);
+                
+                // Build tooltip text for upcoming interaction
+                let tooltipText = '';
+                if (upcomingInteraction) {
+                  const interactionDate = parseLocalDate(upcomingInteraction.date);
+                  const dateStr = formatDateShort(interactionDate);
+                  const typeEmoji = upcomingInteraction.type === 'Call' ? '☎️' :
+                                   upcomingInteraction.type === 'Text' ? '📱' :
+                                   upcomingInteraction.type === 'Email' ? '✉️' :
+                                   upcomingInteraction.type === 'In-Person' ? '🤝' :
+                                   upcomingInteraction.type === 'Video' ? '🖥️' :
+                                   upcomingInteraction.type === 'LinkedIn' ? '🤵' : '';
+                  
+                  // Build participant list
+                  const participants = [getFullName(contact)];
+                  if (upcomingInteraction.taggedContacts && upcomingInteraction.taggedContacts.length > 0) {
+                    upcomingInteraction.taggedContacts.forEach(taggedId => {
+                      const taggedContact = getContact(taggedId);
+                      if (taggedContact) participants.push(getFullName(taggedContact));
+                    });
+                  }
+                  
+                  tooltipText = `${typeEmoji} ${upcomingInteraction.type} with ${participants.join(' & ')} on ${dateStr}`;
+                  
+                  // Add notes if they exist
+                  if (upcomingInteraction.notes && upcomingInteraction.notes.trim()) {
+                    tooltipText += `: ${upcomingInteraction.notes}`;
+                  }
+                  
+                  // Truncate if too long (150 chars to allow for more detail)
+                  if (tooltipText.length > 150) {
+                    tooltipText = tooltipText.substring(0, 147) + '...';
+                  }
+                }
 
                 return `
                   <div class="card card-clickable contact-card-compact" style="border-left: 3px solid var(--color-${status}); margin: 0; ${priorityStyle}" onclick="navigateTo('contact', {id: '${contact.id}'})">
@@ -2954,8 +3244,9 @@
                         </div>
                         <div class="contact-meta text-muted">${contact.relationshipType}</div>
                       </div>
-                      <div style="text-align: right; white-space: nowrap;">
-                        <div class="contact-meta" style="color: var(--color-${status}); font-weight: 600;">
+                      <div style="text-align: right; white-space: nowrap; position: relative;">
+                        <div class="contact-meta" style="color: var(--color-${status}); font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                          ${upcomingInteraction ? `<span class="upcoming-indicator" onclick="event.stopPropagation();">📅<span class="upcoming-tooltip">${escapeHtml(tooltipText)}</span></span>` : ''}
                           ${statusText}
                         </div>
                       </div>
@@ -3192,12 +3483,6 @@
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                   <span style="min-width: 70px; font-weight: 600; color: var(--color-text-secondary); font-size: 0.8125rem;">Position</span>
                   <span style="font-size: 0.8125rem;">${escapeHtml(contact.position)}</span>
-                </div>
-              ` : ''}
-              ${contact.location ? `
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="min-width: 70px; font-weight: 600; color: var(--color-text-secondary); font-size: 0.8125rem;">Location</span>
-                  <span style="font-size: 0.8125rem;">${escapeHtml(contact.location)}</span>
                 </div>
               ` : ''}
               ${contact.birthdayMonth && contact.birthdayDay ? `
@@ -3516,19 +3801,6 @@
                   value="${contact ? escapeHtml(contact.position || '') : ''}"
                 />
               </div>
-            </div>
-
-            <!-- Location -->
-            <div class="form-group">
-              <label class="form-label">Location</label>
-              <input
-                type="text"
-                id="contact-location"
-                name="location"
-                class="form-input"
-                placeholder="e.g., San Francisco, CA"
-                value="${contact ? escapeHtml(contact.location || '') : ''}"
-              />
             </div>
 
             <!-- Birthday -->
@@ -4655,7 +4927,7 @@
               </div>
             ` : `
               <p class="text-muted text-small mb-md">
-                Upload your LinkedIn connections CSV to create a reference database. When you add contacts with LinkedIn URLs, their company, position, and location will be automatically filled in.
+                Upload your LinkedIn connections CSV to create a reference database. When you add contacts with LinkedIn URLs, their company and position will be automatically filled in.
               </p>
               
               <div style="margin-bottom: var(--spacing-md);">
@@ -4715,7 +4987,7 @@
               </div>
               <div style="display: flex; justify-content: space-between;">
                 <span class="text-muted">Version</span>
-                <span style="font-weight: 600;">1.26</span>
+                <span style="font-weight: 600;">2.14</span>
               </div>
             </div>
           </div>
@@ -4820,6 +5092,7 @@
       const companyIdx = headers.findIndex(h => h.toLowerCase().includes('company'));
       const positionIdx = headers.findIndex(h => h.toLowerCase().includes('position'));
       const connectedOnIdx = headers.findIndex(h => h.toLowerCase().includes('connected on'));
+      const locationIdx = headers.findIndex(h => h.toLowerCase().includes('location'));
 
       // Parse data rows (start after header row)
       const linkedinRecords = [];
@@ -4840,6 +5113,7 @@
           email: emailIdx >= 0 ? values[emailIdx]?.trim() : '',
           company: companyIdx >= 0 ? values[companyIdx]?.trim() : '',
           position: positionIdx >= 0 ? values[positionIdx]?.trim() : '',
+          location: locationIdx >= 0 ? values[locationIdx]?.trim() : '',
           connectedOn: connectedOnIdx >= 0 ? values[connectedOnIdx]?.trim() : ''
         };
 
@@ -4902,8 +5176,7 @@
       // Check each field for conflicts or updates
       const fieldsToCheck = [
         { key: 'company', label: 'Company' },
-        { key: 'position', label: 'Position' },
-        { key: 'location', label: 'Location' }
+        { key: 'position', label: 'Position' }
       ];
 
       fieldsToCheck.forEach(field => {
