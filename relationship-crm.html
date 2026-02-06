@@ -89,10 +89,6 @@
       --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
     }
 
-    body.dark-mode {
-      background-color: var(--color-background);
-    }
-
     /* Dark mode specific overrides for better contrast */
     body.dark-mode .card {
       border-color: var(--color-border);
@@ -287,11 +283,6 @@
     }
     
     /* Dark mode Needs Attention improvements */
-    body.dark-mode .card-attention {
-      background: var(--color-surface);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    }
-    
     body.dark-mode .needs-attention-grid > div {
       padding: 1rem;
       background: var(--color-background);
@@ -1921,16 +1912,10 @@
       return `${year}-${month}-${day}`;
     }
 
-    function getYesterdayString() {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      return getLocalDateString(yesterday);
-    }
-
-    function getTwoDaysAgoString() {
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      return getLocalDateString(twoDaysAgo);
+    function getDaysAgoString(n) {
+      const date = new Date();
+      date.setDate(date.getDate() - n);
+      return getLocalDateString(date);
     }
 
     function formatDate(date) {
@@ -2098,10 +2083,7 @@
 
     // Load data from Firestore
     async function loadState() {
-      if (!currentUser) {
-        console.log('No user logged in, skipping Firestore load');
-        return;
-      }
+      if (!currentUser) return;
 
       try {
         const userDocRef = doc(db, 'users', currentUser.uid);
@@ -2113,9 +2095,6 @@
           AppState.interactions = data.interactions || [];
           AppState.linkedinData = data.linkedinData || [];
           AppState.enrichmentConflicts = data.enrichmentConflicts || [];
-          console.log('Data loaded from Firestore');
-        } else {
-          console.log('No existing data in Firestore, starting fresh');
         }
       } catch (error) {
         console.error('Error loading data from Firestore:', error);
@@ -2125,10 +2104,7 @@
 
     // Save data to Firestore
     async function saveState() {
-      if (!currentUser) {
-        console.log('No user logged in, skipping Firestore save');
-        return;
-      }
+      if (!currentUser) return;
 
       try {
         const userDocRef = doc(db, 'users', currentUser.uid);
@@ -2140,7 +2116,6 @@
           version: '1.0',
           lastUpdated: new Date().toISOString()
         });
-        console.log('Data saved to Firestore');
       } catch (error) {
         console.error('Error saving data to Firestore:', error);
         if (error.code === 'permission-denied') {
@@ -2167,7 +2142,6 @@
           
           // Re-render current view to show updated data
           renderCurrentView();
-          console.log('Data synced from Firestore');
         }
       }, (error) => {
         console.error('Snapshot error:', error);
@@ -2496,19 +2470,6 @@
       return upcoming.sort((a, b) => a.daysUntil - b.daysUntil);
     }
 
-    function getNeedsAttention() {
-      return AppState.contacts
-        .filter(c => {
-          const days = getDaysSinceLastContact(c.id);
-          return days === null || days >= 14;
-        })
-        .sort((a, b) => {
-          const daysA = getDaysSinceLastContact(a.id) || 9999;
-          const daysB = getDaysSinceLastContact(b.id) || 9999;
-          return daysB - daysA;
-        });
-    }
-
     /* ===== ROUTER & NAVIGATION ===== */
 
     const Routes = {
@@ -2612,6 +2573,36 @@
           btn.addEventListener('click', handleGoogleSignIn);
         }
       }, 0);
+    }
+
+    function renderNeedsAttentionColumn(label, contacts) {
+      return `
+        <div style="${contacts.length === 0 ? 'opacity: 0.5;' : ''}">
+          <h3 style="font-size: 0.8125rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 2px solid var(--color-primary);">
+            ${label} ${contacts.length > 0 ? `(${contacts.length})` : ''}
+          </h3>
+          ${contacts.length > 0 ? `
+            <div style="display: flex; flex-direction: column; gap: 0.375rem; max-height: 160px; overflow-y: auto; padding-right: 0.5rem;">
+              ${contacts.map(contact => {
+                const days = getDaysSinceLastContact(contact.id);
+                const status = getContactStatus(contact.id);
+                const statusText = days === null ? 'Never' : `${days}d`;
+                const hasUpcoming = hasUpcomingInteraction(contact.id);
+                return `
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0; ${hasUpcoming ? 'opacity: 0.6;' : ''}" onclick="navigateTo('contact', {id: '${contact.id}'})">
+                    <div style="min-width: 0; flex: 1;">
+                      <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${hasUpcoming ? 'color: var(--color-text-secondary);' : ''}">${escapeHtml(getFullName(contact))}</div>
+                    </div>
+                    <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap; ${hasUpcoming ? 'opacity: 0.7;' : ''}">
+                      ${hasUpcoming ? '📅 ' : ''}${statusText}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : '<p class="text-muted" style="font-size: 0.8125rem;">All caught up!</p>'}
+        </div>
+      `;
     }
 
     function renderDashboard() {
@@ -2763,58 +2754,8 @@
               <h2 class="section-title">Needs Attention</h2>
               ${(needsAttentionProfessional.length > 0 || needsAttentionPersonal.length > 0) ? `
                 <div class="needs-attention-grid">
-                  <!-- Professional Column -->
-                  <div style="${needsAttentionProfessional.length === 0 ? 'opacity: 0.5;' : ''}">
-                    <h3 style="font-size: 0.8125rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 2px solid var(--color-primary);">
-                      Professional ${needsAttentionProfessional.length > 0 ? `(${needsAttentionProfessional.length})` : ''}
-                    </h3>
-                    ${needsAttentionProfessional.length > 0 ? `
-                      <div style="display: flex; flex-direction: column; gap: 0.375rem; max-height: 160px; overflow-y: auto; padding-right: 0.5rem;">
-                        ${needsAttentionProfessional.map(contact => {
-                          const days = getDaysSinceLastContact(contact.id);
-                          const status = getContactStatus(contact.id);
-                          const statusText = days === null ? 'Never' : `${days}d`;
-                          const hasUpcoming = hasUpcomingInteraction(contact.id);
-                          return `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0; ${hasUpcoming ? 'opacity: 0.6;' : ''}" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                              <div style="min-width: 0; flex: 1;">
-                                <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${hasUpcoming ? 'color: var(--color-text-secondary);' : ''}">${escapeHtml(getFullName(contact))}</div>
-                              </div>
-                              <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap; ${hasUpcoming ? 'opacity: 0.7;' : ''}">
-                                ${hasUpcoming ? '📅 ' : ''}${statusText}
-                              </div>
-                            </div>
-                          `;
-                        }).join('')}
-                      </div>
-                    ` : '<p class="text-muted" style="font-size: 0.8125rem;">All caught up!</p>'}
-                  </div>
-                  <!-- Personal Column -->
-                  <div style="${needsAttentionPersonal.length === 0 ? 'opacity: 0.5;' : ''}">
-                    <h3 style="font-size: 0.8125rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 2px solid var(--color-primary);">
-                      Personal ${needsAttentionPersonal.length > 0 ? `(${needsAttentionPersonal.length})` : ''}
-                    </h3>
-                    ${needsAttentionPersonal.length > 0 ? `
-                      <div style="display: flex; flex-direction: column; gap: 0.375rem; max-height: 160px; overflow-y: auto; padding-right: 0.5rem;">
-                        ${needsAttentionPersonal.map(contact => {
-                          const days = getDaysSinceLastContact(contact.id);
-                          const status = getContactStatus(contact.id);
-                          const statusText = days === null ? 'Never' : `${days}d`;
-                          const hasUpcoming = hasUpcomingInteraction(contact.id);
-                          return `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.5rem; background: var(--color-background); border-radius: 0.5rem; cursor: pointer; flex-shrink: 0; ${hasUpcoming ? 'opacity: 0.6;' : ''}" onclick="navigateTo('contact', {id: '${contact.id}'})">
-                              <div style="min-width: 0; flex: 1;">
-                                <div style="font-weight: 600; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${hasUpcoming ? 'color: var(--color-text-secondary);' : ''}">${escapeHtml(getFullName(contact))}</div>
-                              </div>
-                              <div style="font-size: 0.8125rem; font-weight: 600; color: var(--color-${status}); margin-left: 0.5rem; white-space: nowrap; ${hasUpcoming ? 'opacity: 0.7;' : ''}">
-                                ${hasUpcoming ? '📅 ' : ''}${statusText}
-                              </div>
-                            </div>
-                          `;
-                        }).join('')}
-                      </div>
-                    ` : '<p class="text-muted text-small">All caught up!</p>'}
-                  </div>
+                  ${renderNeedsAttentionColumn('Professional', needsAttentionProfessional)}
+                  ${renderNeedsAttentionColumn('Personal', needsAttentionPersonal)}
                 </div>
               ` : '<p class="text-muted text-small">All caught up! Great job staying connected with your network.</p>'}
             </div>
@@ -2988,43 +2929,26 @@
       `;
     }
 
+    const INTERACTION_TYPE_META = {
+      'Call':      { icon: '☎️', iconClass: 'icon-call',     iconText: 'C' },
+      'Text':      { icon: '📱', iconClass: 'icon-text',     iconText: 'T' },
+      'Email':     { icon: '✉️', iconClass: 'icon-email',    iconText: 'E' },
+      'In-Person': { icon: '🤝', iconClass: 'icon-inperson', iconText: 'P' },
+      'Video':     { icon: '🖥️', iconClass: 'icon-video',    iconText: 'V' },
+      'LinkedIn':  { icon: '🤵', iconClass: 'icon-linkedin', iconText: 'L' },
+      'Social':    { icon: '🤵', iconClass: 'icon-linkedin', iconText: 'L' } // Legacy support
+    };
+
     function getInteractionIcon(type) {
-      const icons = {
-        'Call': '☎️',
-        'Text': '📱',
-        'Email': '✉️',
-        'In-Person': '🤝',
-        'Video': '🖥️',
-        'LinkedIn': '🤵',
-        'Social': '🤵' // Legacy support
-      };
-      return icons[type] || '📱';
+      return (INTERACTION_TYPE_META[type] || INTERACTION_TYPE_META['Text']).icon;
     }
 
     function getInteractionIconClass(type) {
-      const iconClasses = {
-        'Call': 'icon-call',
-        'Text': 'icon-text',
-        'Email': 'icon-email',
-        'In-Person': 'icon-inperson',
-        'Video': 'icon-video',
-        'LinkedIn': 'icon-linkedin',
-        'Social': 'icon-linkedin' // Legacy support
-      };
-      return iconClasses[type] || 'icon-text';
+      return (INTERACTION_TYPE_META[type] || INTERACTION_TYPE_META['Text']).iconClass;
     }
 
     function getInteractionIconText(type) {
-      const iconTexts = {
-        'Call': 'C',
-        'Text': 'T',
-        'Email': 'E',
-        'In-Person': 'P',
-        'Video': 'V',
-        'LinkedIn': 'L',
-        'Social': 'L' // Legacy support
-      };
-      return iconTexts[type] || 'I';
+      return (INTERACTION_TYPE_META[type] || INTERACTION_TYPE_META['Text']).iconText;
     }
 
     function escapeHtml(text) {
@@ -3332,7 +3256,7 @@
               const interactions = groupedByDate[date];
               const dateObj = new Date(date + 'T00:00:00');
               const isToday = date === getLocalDateString();
-              const isYesterday = date === getYesterdayString();
+              const isYesterday = date === getDaysAgoString(1);
 
               let dateLabel;
               if (isToday) {
@@ -3948,7 +3872,6 @@
 
     function handleContactFormSubmit(event) {
       event.preventDefault();
-      console.log('📝 Form submitted');
 
       try {
         const formData = new FormData(event.target);
@@ -3966,8 +3889,6 @@
           birthdayDay: formData.get('birthdayDay'),
           contactFrequency: contactFrequencyValue ? parseInt(contactFrequencyValue) : null
         };
-        
-        console.log('📝 Form data:', data);
 
         // Validate
         if (!data.firstName) {
@@ -4002,20 +3923,14 @@
           return;
         }
 
-        console.log('✅ Validation passed');
-
         // Save
         const isEdit = AppState.currentView === 'edit-contact';
         if (isEdit) {
-          console.log('✏️ Updating contact:', AppState.selectedContactId);
           updateContact(AppState.selectedContactId, data);
           showToast('Contact updated');
           navigateTo('contact', { id: AppState.selectedContactId });
         } else {
-          console.log('➕ Adding new contact');
           const newContact = addContact(data);
-          console.log('✅ Contact added with ID:', newContact.id);
-          console.log('📊 Total contacts now:', AppState.contacts.length);
           showToast('Contact added');
           navigateTo('contact', { id: newContact.id });
         }
@@ -4034,167 +3949,35 @@
       taggedContacts: []
     };
 
-    function openInteractionModal(contactId) {
-      const contact = getContact(contactId);
-      if (!contact) return;
+    const INTERACTION_TYPES = [
+      { type: 'Call', icon: '☎️' },
+      { type: 'Text', icon: '📱' },
+      { type: 'Email', icon: '✉️' },
+      { type: 'In-Person', icon: '🤝' },
+      { type: 'Video', icon: '🖥️' },
+      { type: 'LinkedIn', icon: '🤵' }
+    ];
 
-      interactionModalState = {
-        contactId: contactId,
-        selectedType: null,
-        selectedDate: getLocalDateString(),
-        taggedContacts: []
-      };
-
-      const modal = document.getElementById('interaction-modal');
-      const modalContent = document.getElementById('modal-content');
-
-      const interactionTypes = [
-        { type: 'Call', icon: '☎️' },
-        { type: 'Text', icon: '📱' },
-        { type: 'Email', icon: '✉️' },
-        { type: 'In-Person', icon: '🤝' },
-        { type: 'Video', icon: '🖥️' },
-        { type: 'LinkedIn', icon: '🤵' }
-      ];
-
-      // Get other contacts for tagging (exclude current contact)
-      const otherContacts = AppState.contacts
-        .filter(c => c.id !== contactId)
-        .sort((a, b) => getFullName(a).localeCompare(getFullName(b)));
-
-      modalContent.innerHTML = `
+    function renderInteractionModalContent({ contact, contactId, dateSection, selectedType, existingNotes, submitLabel, otherContacts }) {
+      const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      return `
         <p class="text-muted mb-md">with ${escapeHtml(getFullName(contact))}</p>
 
         <!-- Date Selection -->
         <div class="form-group">
           <label class="form-label">Date *</label>
-          <div class="quick-dates">
-            <button type="button" class="quick-date-btn selected" onclick="selectQuickDate('today')">Today</button>
-            <button type="button" class="quick-date-btn" onclick="selectQuickDate('yesterday')">Yesterday</button>
-            <button type="button" class="quick-date-btn" onclick="selectQuickDate('2days')">2 days ago</button>
-          </div>
-          <input
-            type="date"
-            id="interaction-date"
-            class="form-input"
-            value="${interactionModalState.selectedDate}"
-            onchange="interactionModalState.selectedDate = this.value; updateQuickDateButtons();"
-          />
-          <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;">Today is ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+          ${dateSection}
+          <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;">Today is ${todayStr}</div>
         </div>
 
         <!-- Interaction Type -->
         <div class="form-group">
           <label class="form-label">Type *</label>
           <div class="interaction-types">
-            ${interactionTypes.map(({ type, icon }) => `
+            ${INTERACTION_TYPES.map(({ type, icon }) => `
               <button
                 type="button"
-                class="interaction-type-btn"
-                onclick="selectInteractionType('${type}')"
-                data-type="${type}"
-              >
-                <span class="icon">${icon}</span>
-                <span class="label">${type}</span>
-              </button>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Tag Other Contacts -->
-        ${otherContacts.length > 0 ? `
-          <div class="form-group">
-            <label class="form-label">Tag other contacts (optional)</label>
-            <div id="tagged-contacts-display" style="display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.5rem; min-height: 0;"></div>
-            <select
-              id="tag-contact-select"
-              class="form-select"
-              onchange="addTaggedContact(this.value); this.value = '';"
-            >
-              <option value="">+ Add another person...</option>
-              ${otherContacts.map(c => `
-                <option value="${c.id}">${escapeHtml(getFullName(c))}</option>
-              `).join('')}
-            </select>
-          </div>
-        ` : ''}
-
-        <!-- Notes -->
-        <div class="form-group">
-          <label class="form-label">Notes (optional)</label>
-          <textarea
-            id="interaction-notes"
-            class="form-textarea"
-            placeholder="Add any notes about this interaction..."
-            rows="3"
-          ></textarea>
-        </div>
-
-        <!-- Submit -->
-        <button class="btn btn-block" onclick="handleInteractionSubmit()">Log Interaction</button>
-      `;
-
-      modal.classList.add('active');
-    }
-
-    function openEditInteractionModal(interactionId) {
-      const interaction = AppState.interactions.find(i => i.id === interactionId);
-      if (!interaction) return;
-
-      const contact = getContact(interaction.contactId);
-      if (!contact) return;
-
-      interactionModalState = {
-        contactId: interaction.contactId,
-        selectedType: interaction.type,
-        selectedDate: interaction.date,
-        editingId: interactionId,
-        taggedContacts: interaction.taggedContacts ? [...interaction.taggedContacts] : []
-      };
-
-      const modal = document.getElementById('interaction-modal');
-      const modalContent = document.getElementById('modal-content');
-      const modalTitle = document.querySelector('.modal-title');
-      modalTitle.textContent = 'Edit Interaction';
-
-      const interactionTypes = [
-        { type: 'Call', icon: '☎️' },
-        { type: 'Text', icon: '📱' },
-        { type: 'Email', icon: '✉️' },
-        { type: 'In-Person', icon: '🤝' },
-        { type: 'Video', icon: '🖥️' },
-        { type: 'LinkedIn', icon: '🤵' }
-      ];
-
-      // Get other contacts for tagging (exclude current contact)
-      const otherContacts = AppState.contacts
-        .filter(c => c.id !== interaction.contactId)
-        .sort((a, b) => getFullName(a).localeCompare(getFullName(b)));
-
-      modalContent.innerHTML = `
-        <p class="text-muted mb-md">with ${escapeHtml(getFullName(contact))}</p>
-
-        <!-- Date Selection -->
-        <div class="form-group">
-          <label class="form-label">Date *</label>
-          <input
-            type="date"
-            id="interaction-date"
-            class="form-input"
-            value="${interaction.date}"
-            onchange="interactionModalState.selectedDate = this.value;"
-          />
-          <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;">Today is ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-        </div>
-
-        <!-- Interaction Type -->
-        <div class="form-group">
-          <label class="form-label">Type *</label>
-          <div class="interaction-types">
-            ${interactionTypes.map(({ type, icon }) => `
-              <button
-                type="button"
-                class="interaction-type-btn ${type === interaction.type ? 'selected' : ''}"
+                class="interaction-type-btn ${type === selectedType ? 'selected' : ''}"
                 onclick="selectInteractionType('${type}')"
                 data-type="${type}"
               >
@@ -4231,12 +4014,93 @@
             class="form-textarea"
             placeholder="Add any notes about this interaction..."
             rows="3"
-          >${escapeHtml(interaction.notes || '')}</textarea>
+          >${existingNotes}</textarea>
         </div>
 
         <!-- Submit -->
-        <button class="btn btn-block" onclick="handleInteractionSubmit()">Save Changes</button>
+        <button class="btn btn-block" onclick="handleInteractionSubmit()">${submitLabel}</button>
       `;
+    }
+
+    function openInteractionModal(contactId) {
+      const contact = getContact(contactId);
+      if (!contact) return;
+
+      interactionModalState = {
+        contactId: contactId,
+        selectedType: null,
+        selectedDate: getLocalDateString(),
+        taggedContacts: []
+      };
+
+      const modal = document.getElementById('interaction-modal');
+      const modalContent = document.getElementById('modal-content');
+
+      const otherContacts = AppState.contacts
+        .filter(c => c.id !== contactId)
+        .sort((a, b) => getFullName(a).localeCompare(getFullName(b)));
+
+      const dateSection = `
+        <div class="quick-dates">
+          <button type="button" class="quick-date-btn selected" onclick="selectQuickDate('today')">Today</button>
+          <button type="button" class="quick-date-btn" onclick="selectQuickDate('yesterday')">Yesterday</button>
+          <button type="button" class="quick-date-btn" onclick="selectQuickDate('2days')">2 days ago</button>
+        </div>
+        <input type="date" id="interaction-date" class="form-input"
+          value="${interactionModalState.selectedDate}"
+          onchange="interactionModalState.selectedDate = this.value; updateQuickDateButtons();"
+        />
+      `;
+
+      modalContent.innerHTML = renderInteractionModalContent({
+        contact, contactId, dateSection,
+        selectedType: null,
+        existingNotes: '',
+        submitLabel: 'Log Interaction',
+        otherContacts
+      });
+
+      modal.classList.add('active');
+    }
+
+    function openEditInteractionModal(interactionId) {
+      const interaction = AppState.interactions.find(i => i.id === interactionId);
+      if (!interaction) return;
+
+      const contact = getContact(interaction.contactId);
+      if (!contact) return;
+
+      interactionModalState = {
+        contactId: interaction.contactId,
+        selectedType: interaction.type,
+        selectedDate: interaction.date,
+        editingId: interactionId,
+        taggedContacts: interaction.taggedContacts ? [...interaction.taggedContacts] : []
+      };
+
+      const modal = document.getElementById('interaction-modal');
+      const modalContent = document.getElementById('modal-content');
+      const modalTitle = document.querySelector('.modal-title');
+      modalTitle.textContent = 'Edit Interaction';
+
+      const otherContacts = AppState.contacts
+        .filter(c => c.id !== interaction.contactId)
+        .sort((a, b) => getFullName(a).localeCompare(getFullName(b)));
+
+      const dateSection = `
+        <input type="date" id="interaction-date" class="form-input"
+          value="${interaction.date}"
+          onchange="interactionModalState.selectedDate = this.value;"
+        />
+      `;
+
+      modalContent.innerHTML = renderInteractionModalContent({
+        contact, contactId: interaction.contactId, dateSection,
+        selectedType: interaction.type,
+        existingNotes: escapeHtml(interaction.notes || ''),
+        submitLabel: 'Save Changes',
+        otherContacts
+      });
 
       // Display existing tagged contacts
       updateTaggedContactsDisplay();
@@ -4261,9 +4125,9 @@
       if (option === 'today') {
         dateStr = getLocalDateString();
       } else if (option === 'yesterday') {
-        dateStr = getYesterdayString();
+        dateStr = getDaysAgoString(1);
       } else if (option === '2days') {
-        dateStr = getTwoDaysAgoString();
+        dateStr = getDaysAgoString(2);
       }
 
       interactionModalState.selectedDate = dateStr;
@@ -4273,8 +4137,8 @@
 
     function updateQuickDateButtons() {
       const today = getLocalDateString();
-      const yesterday = getYesterdayString();
-      const twoDaysAgo = getTwoDaysAgoString();
+      const yesterday = getDaysAgoString(1);
+      const twoDaysAgo = getDaysAgoString(2);
       const selected = interactionModalState.selectedDate;
 
       document.querySelectorAll('.quick-date-btn').forEach(btn => {
@@ -5594,11 +5458,7 @@
 
     /* ===== INITIALIZATION ===== */
 
-    /* ===== INITIALIZATION ===== */
-
     function init() {
-      console.log('🚀 Initializing app...');
-      
       // Load theme preference (still uses localStorage - device-specific)
       loadTheme();
 
@@ -5608,14 +5468,10 @@
         console.error('❌ App element not found! DOM may not be ready.');
         return;
       }
-      
-      console.log('✅ App element found, rendering login screen...');
 
       // Show login screen immediately while waiting for Firebase to initialize
-      // This prevents a blank screen on first load
       try {
         renderLoginScreen();
-        console.log('✅ Login screen rendered');
       } catch (error) {
         console.error('❌ Error rendering login screen:', error);
       }
@@ -5624,40 +5480,20 @@
       onAuthStateChanged(auth, async (user) => {
         try {
           currentUser = user;
-          console.log('🔥 Auth state changed. User:', user ? user.displayName : 'null');
           
           if (user) {
-            console.log('User signed in:', user.displayName);
-            
-            // Load data from Firestore
-            console.log('📥 Loading data from Firestore...');
             await loadState();
-            console.log('✅ Data loaded successfully');
-            
-            // Set up real-time sync
-            console.log('🔄 Setting up real-time sync...');
             setupRealtimeSync();
-            console.log('✅ Real-time sync active');
-            
-            // Recalculate lastContactedAt for all contacts
-            console.log('📊 Recalculating contact dates...');
             recalculateAllLastContactedDates();
-            console.log('✅ Contact dates recalculated');
             
-            // Force render to dashboard with proper UI update
-            console.log('🎨 Rendering dashboard...');
             AppState.currentView = 'dashboard';
-            updateUserMenuDisplay(); // Update header UI first
-            renderCurrentView(); // Then render the view
+            updateUserMenuDisplay();
+            renderCurrentView();
             updateNavigation();
-            console.log('✅ Dashboard rendered successfully');
           } else {
-            console.log('User signed out - rendering login screen');
-            // Clear state and render login screen
             AppState.currentView = 'dashboard';
-            updateUserMenuDisplay(); // Update header UI first
-            renderCurrentView(); // Then render login screen
-            console.log('✅ Login screen rendered');
+            updateUserMenuDisplay();
+            renderCurrentView();
           }
         } catch (error) {
           console.error('❌ CRITICAL ERROR in auth state handler:', error);
@@ -5753,23 +5589,10 @@
 
       // Set up automatic daily backup
       setupAutoBackup();
-
-      console.log('Relationship CRM initialized with Firebase');
-      console.log('Keyboard shortcuts:');
-      console.log('  - ESC: Close modal');
-      console.log('  - Ctrl/Cmd + K: Search contacts');
-      console.log('  - Ctrl/Cmd + N: New contact');
-      console.log('  - Ctrl/Cmd + H: Dashboard');
     }
 
-    /* ===== EXPOSE FUNCTIONS TO WINDOW (CRITICAL FOR onclick HANDLERS) ===== */
-    // These MUST execute before HTML tries to use them
-    console.log('⚡ Step 1: About to expose functions...');
-    console.log('⚡ Step 2: Testing if navigateTo exists in module scope:', typeof navigateTo);
-    console.log('⚡ Step 3: Testing if window exists:', typeof window);
-    
+    /* ===== EXPOSE FUNCTIONS TO WINDOW (FOR HTML onclick HANDLERS) ===== */
     try {
-      // Export ONLY functions that actually exist and are called from HTML
       const functionsToExport = {
         navigateTo,
         toggleTheme,
@@ -5823,22 +5646,9 @@
         window[name] = functionsToExport[name];
         globalThis[name] = functionsToExport[name];
       });
-      
-      console.log('✅ Step 4: Assignment complete!');
-      console.log('✅ Step 5: window.navigateTo type:', typeof window.navigateTo);
-      console.log('✅ Step 6: Exported', Object.keys(functionsToExport).length, 'functions');
     } catch (error) {
       console.error('❌ Error exposing functions:', error);
     }
-
-
-
-    /* ===== EXPOSE FUNCTIONS TO WINDOW (FOR HTML onclick HANDLERS) ===== */
-    // Export functions to window BEFORE starting the app
-    
-    // Duplicate exports removed - handled above in try-catch block
-    
-    console.log('✅ All functions exposed to window');
 
     // Start the app when DOM is ready
     if (document.readyState === 'loading') {
