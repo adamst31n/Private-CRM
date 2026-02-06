@@ -2453,6 +2453,8 @@
 
     function getUpcomingBirthdays(days = 30) {
       const today = new Date();
+      // Normalize today to midnight for accurate date comparison
+      today.setHours(0, 0, 0, 0);
       const upcoming = [];
 
       const monthMap = {
